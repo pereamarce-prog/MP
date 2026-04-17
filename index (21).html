@@ -1,0 +1,2227 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Corporativo — Control Operacional</title>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#F5F4F0;
+  --surface:#FFFFFF;
+  --surface2:#EFEDE8;
+  --border:#E0DDD6;
+  --border2:#C8C4BB;
+  --text:#18181A;
+  --text2:#6B6A66;
+  --text3:#A8A6A0;
+  --radius:8px;
+  --radius-lg:12px;
+  /* Brand colors */
+  --vv:#C8501A;   /* Volo Volo — terracota */
+  --vv-bg:#FDF0EB;
+  --vv-border:#F5C4B0;
+  --ph:#2A7A4B;   /* Papas/Helados — verde */
+  --ph-bg:#EBF5EE;
+  --ph-border:#A8D9BA;
+  --la:#1A4F8C;   /* Lasagna — azul profundo */
+  --la-bg:#EBF0F8;
+  --la-border:#A8C0E0;
+  --corp:#5A4A3A;  /* Corporativo — café */
+  --corp-bg:#F0EDE8;
+  --corp-border:#C8BFB0;
+  /* Semantic */
+  --ok:#2A7A4B; --ok-bg:#EBF5EE;
+  --warn:#8C6A1A; --warn-bg:#FBF3E0;
+  --bad:#8C1A1A; --bad-bg:#F5EBEB;
+  --info:#1A4F8C; --info-bg:#EBF0F8;
+}
+body{font-family:'Geist',sans-serif;background:var(--bg);color:var(--text);font-size:13px;line-height:1.5;}
+.app{display:flex;height:100vh;overflow:hidden;}
+
+/* ── SIDEBAR ── */
+.sidebar{width:230px;min-width:230px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto;overflow-x:hidden;}
+.sidebar-header{padding:16px 14px 12px;border-bottom:1px solid var(--border);}
+.corp-name{font-size:13px;font-weight:600;color:var(--text);letter-spacing:-.01em;}
+.corp-sub{font-size:10px;color:var(--text3);font-family:'Geist Mono',monospace;margin-top:1px;}
+
+.brand-section{border-bottom:1px solid var(--border);}
+.brand-header{display:flex;align-items:center;gap:8px;padding:10px 14px 6px;cursor:pointer;user-select:none;}
+.brand-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.brand-label{font-size:11px;font-weight:600;color:var(--text2);letter-spacing:.04em;text-transform:uppercase;flex:1;}
+.brand-toggle{font-size:10px;color:var(--text3);transition:transform .2s;}
+.brand-toggle.open{transform:rotate(90deg);}
+.brand-nav{overflow:hidden;transition:max-height .25s ease;}
+
+.ni{display:flex;align-items:center;gap:8px;padding:6px 12px 6px 32px;cursor:pointer;font-size:12px;color:var(--text2);border-radius:0;transition:background .1s,color .1s;white-space:nowrap;}
+.ni:hover{background:var(--surface2);color:var(--text);}
+.ni.active{color:var(--text);font-weight:500;}
+.ni-icon{font-size:13px;width:16px;text-align:center;flex-shrink:0;}
+.ni-badge{font-size:9px;padding:1px 5px;border-radius:6px;margin-left:auto;font-weight:500;}
+
+/* active state per brand */
+.brand-vv .ni.active{background:var(--vv-bg);}
+.brand-vv .ni.active{color:var(--vv);}
+.brand-ph .ni.active{background:var(--ph-bg);color:var(--ph);}
+.brand-la .ni.active{background:var(--la-bg);color:var(--la);}
+.brand-corp .ni.active{background:var(--corp-bg);color:var(--corp);}
+
+/* ── MAIN ── */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0;}
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 22px;display:flex;align-items:center;gap:12px;height:50px;flex-shrink:0;}
+.topbar-brand{display:flex;align-items:center;gap:8px;}
+.topbar-dot{width:10px;height:10px;border-radius:50%;}
+.topbar-name{font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;}
+.topbar-sep{color:var(--border2);font-size:14px;}
+.topbar-title{font-size:14px;font-weight:500;color:var(--text);}
+.topbar-right{margin-left:auto;display:flex;gap:8px;align-items:center;}
+
+.content{flex:1;overflow-y:auto;padding:20px 24px;}
+.page{display:none;}.page.active{display:block;}
+
+/* ── KPIs ── */
+.kpis{display:grid;gap:10px;margin-bottom:18px;}
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px 16px;}
+.kpi-l{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px;}
+.kpi-v{font-size:22px;font-weight:500;color:var(--text);line-height:1;}
+.kpi-s{font-size:11px;color:var(--text3);margin-top:4px;}
+.up{color:var(--ok);}.dn{color:var(--bad);}
+
+/* ── TOOLBAR ── */
+.toolbar{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center;}
+.toolbar input[type=text],.toolbar input[type=date],.toolbar input[type=month],.toolbar select{
+  font-size:12px;padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius);
+  background:var(--surface);color:var(--text);font-family:'Geist',sans-serif;
+}
+.toolbar input[type=text]{min-width:180px;}
+.toolbar select,.toolbar input[type=date],.toolbar input[type=month]{cursor:pointer;}
+.btn{font-size:12px;padding:7px 14px;border:1px solid var(--border2);border-radius:var(--radius);
+  background:var(--surface);color:var(--text);cursor:pointer;font-family:'Geist',sans-serif;
+  font-weight:500;transition:background .12s,border-color .12s;white-space:nowrap;}
+.btn:hover{background:var(--surface2);}
+.btn-primary{background:var(--text);color:var(--surface);border-color:var(--text);}
+.btn-primary:hover{background:#333;}
+.ml{margin-left:auto;}
+
+/* ── CARDS ── */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;margin-bottom:14px;}
+.card-body{padding:16px 18px;}
+.card-title{font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px;}
+
+/* ── TABLES ── */
+.tbl{width:100%;border-collapse:collapse;font-size:12px;}
+.tbl th{text-align:left;font-size:10px;color:var(--text3);padding:9px 12px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;border-bottom:1px solid var(--border);white-space:nowrap;}
+.tbl th.sort{cursor:pointer;user-select:none;}.tbl th.sort:hover{color:var(--text);}
+.tbl td{padding:8px 12px;border-bottom:1px solid var(--border);color:var(--text2);vertical-align:middle;}
+.tbl tr:last-child td{border-bottom:none;}
+.tbl tr:hover td{background:var(--surface2);}
+.tbl td:first-child{color:var(--text);}
+td[data-edit]:hover{cursor:text;background:var(--surface2);}
+
+/* ── BADGES ── */
+.badge{display:inline-flex;align-items:center;font-size:10px;padding:2px 7px;border-radius:8px;font-weight:500;white-space:nowrap;}
+.b-ok{background:var(--ok-bg);color:var(--ok);}
+.b-warn{background:var(--warn-bg);color:var(--warn);}
+.b-bad{background:var(--bad-bg);color:var(--bad);}
+.b-info{background:var(--info-bg);color:var(--info);}
+.b-vv{background:var(--vv-bg);color:var(--vv);}
+.b-ph{background:var(--ph-bg);color:var(--ph);}
+.b-la{background:var(--la-bg);color:var(--la);}
+.b-corp{background:var(--corp-bg);color:var(--corp);}
+
+/* ── FORMS ── */
+.form-box{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px 18px;margin-bottom:14px;}
+.form-title{font-size:12px;font-weight:600;color:var(--text);margin-bottom:12px;text-transform:uppercase;letter-spacing:.04em;}
+.fgrid{display:grid;gap:10px;margin-bottom:12px;}
+.fg{display:flex;flex-direction:column;gap:4px;}
+.fg label{font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;font-weight:500;}
+.fg input,.fg select,.fg textarea{font-size:12px;padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);color:var(--text);font-family:'Geist',sans-serif;}
+.fg input:focus,.fg select:focus{outline:none;border-color:var(--border2);}
+.fg input[readonly]{background:var(--surface2);color:var(--text2);}
+.form-actions{display:flex;gap:8px;align-items:center;}
+.note{font-size:10px;color:var(--text3);margin-top:8px;}
+
+/* ── AUTOCOMPLETE ── */
+.ac-wrap{position:relative;}
+.ac-list{position:absolute;top:calc(100% + 2px);left:0;right:0;background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius);z-index:200;max-height:200px;overflow-y:auto;box-shadow:0 4px 16px rgba(0,0,0,.08);display:none;}
+.ac-item{padding:8px 12px;font-size:12px;color:var(--text);cursor:pointer;border-bottom:.5px solid var(--border);}
+.ac-item:last-child{border-bottom:none;}
+.ac-item:hover{background:var(--surface2);}
+.ac-item small{font-size:10px;color:var(--text3);margin-left:6px;}
+
+/* ── INV CARDS ── */
+.inv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;}
+.ini-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;}
+.ini-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:12px 14px;}
+.ini-card-name{font-size:12px;font-weight:500;color:var(--text);margin-bottom:2px;}
+.ini-card-meta{font-size:10px;color:var(--text3);margin-bottom:8px;}
+.ini-input{width:100%;font-size:18px;font-weight:500;padding:8px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);color:var(--text);text-align:center;}
+.ini-input:focus{outline:none;border-color:var(--border2);}
+.inv-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:12px 14px;}
+.inv-card-name{font-size:12px;font-weight:500;color:var(--text);margin-bottom:2px;}
+.inv-card-cat{font-size:10px;color:var(--text3);margin-bottom:8px;}
+.inv-bar{height:5px;background:var(--surface2);border-radius:3px;overflow:hidden;margin-bottom:5px;}
+.inv-bar-fill{height:100%;border-radius:3px;transition:width .3s;}
+.inv-nums{display:flex;justify-content:space-between;font-size:10px;color:var(--text2);}
+
+/* ── TABS ── */
+.tabs{display:flex;gap:6px;margin-bottom:14px;}
+.tab{font-size:11px;padding:5px 12px;border:1px solid var(--border);border-radius:var(--radius);cursor:pointer;color:var(--text2);background:var(--surface);font-family:'Geist',sans-serif;transition:background .1s;}
+.tab.active{background:var(--surface2);color:var(--text);font-weight:500;border-color:var(--border2);}
+
+/* ── LOADING / TOAST ── */
+.loading{display:flex;align-items:center;justify-content:center;padding:40px;color:var(--text3);font-size:12px;gap:8px;}
+.spin{width:14px;height:14px;border:2px solid var(--border);border-top-color:var(--text2);border-radius:50%;animation:spin .7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.toast{position:fixed;bottom:24px;right:24px;background:var(--text);color:var(--surface);padding:10px 16px;border-radius:var(--radius);font-size:12px;opacity:0;transition:opacity .25s;pointer-events:none;z-index:999;font-family:'Geist',sans-serif;}
+.toast.show{opacity:1;}
+.hint{font-size:10px;color:var(--text3);margin-bottom:8px;}
+
+/* ── PROD BATCH FORM ── */
+.prod-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;margin-bottom:16px;}
+.prod-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:12px 14px;}
+.prod-card-name{font-size:12px;font-weight:500;color:var(--text);margin-bottom:4px;}
+.prod-card-sub{font-size:10px;color:var(--text3);margin-bottom:8px;}
+.prod-qty{width:100%;font-size:18px;font-weight:500;padding:8px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);color:var(--text);font-family:'Geist',sans-serif;text-align:center;}
+.prod-qty:focus{outline:none;border-color:var(--border2);}
+
+/* ── RECIPE ROWS ── */
+.rec-row{display:flex;gap:8px;align-items:center;margin-bottom:7px;}
+.rec-row input{font-size:12px;padding:6px 9px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);color:var(--text);font-family:'Geist',sans-serif;}
+.rec-row .uni-lbl{font-size:12px;color:var(--text2);background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:6px 8px;width:70px;text-align:center;font-family:'Geist',sans-serif;}
+.btn-rm{background:none;border:none;cursor:pointer;color:var(--text3);font-size:13px;padding:0 2px;line-height:1;}
+.btn-rm:hover{color:var(--bad);}
+.btn-add-row{font-size:11px;background:none;border:1px dashed var(--border2);border-radius:var(--radius);padding:5px 12px;cursor:pointer;color:var(--text2);font-family:'Geist',sans-serif;margin-top:4px;}
+.btn-add-row:hover{background:var(--surface2);}
+
+/* ── CORP DASHBOARD ── */
+.brand-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px;}
+.brand-card{border-radius:var(--radius-lg);padding:16px;border:1px solid;}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- ════════════ SIDEBAR ════════════ -->
+<div class="sidebar">
+  <div class="sidebar-header">
+    <div class="corp-name">Corporativo</div>
+    <div class="corp-sub">control operacional</div>
+  </div>
+
+  <!-- CORPORATIVO -->
+  <div class="brand-section brand-corp">
+    <div class="brand-header" onclick="toggleBrand('corp')">
+      <div class="brand-dot" style="background:var(--corp);"></div>
+      <div class="brand-label">Corporativo</div>
+      <div class="brand-toggle open" id="tog-corp">▶</div>
+    </div>
+    <div class="brand-nav" id="nav-corp">
+      <div class="ni active" onclick="go('corp-dash',this,'corp')"><span class="ni-icon">◈</span>Dashboard</div>
+      <div class="ni" onclick="go('corp-gastos',this,'corp')"><span class="ni-icon">◎</span>Gastos corporativos</div>
+      <div class="ni" onclick="go('corp-nomina',this,'corp')"><span class="ni-icon">◉</span>Nómina bodega</div>
+    </div>
+  </div>
+
+  <!-- VOLO VOLO -->
+  <div class="brand-section brand-vv">
+    <div class="brand-header" onclick="toggleBrand('vv')">
+      <div class="brand-dot" style="background:var(--vv);"></div>
+      <div class="brand-label">Volo Volo</div>
+      <div class="brand-toggle" id="tog-vv">▶</div>
+    </div>
+    <div class="brand-nav" id="nav-vv" style="max-height:0;">
+      <div class="ni" onclick="go('vv-dash',this,'vv')"><span class="ni-icon">◈</span>Dashboard</div>
+      <div class="ni" onclick="go('vv-productos',this,'vv')"><span class="ni-icon">◎</span>Precios y tarifas</div>
+      <div class="ni" onclick="go('vv-pedidos',this,'vv')"><span class="ni-icon">◉</span>Pedidos externos</div>
+      <div class="ni" onclick="go('vv-clientes',this,'vv')"><span class="ni-icon">◈</span>Clientes</div>
+      <div class="ni" onclick="go('vv-ventas',this,'vv')"><span class="ni-icon">◎</span>Ventas / cortes</div>
+      <div class="ni" onclick="go('vv-produccion',this,'vv')"><span class="ni-icon">◉</span>Producción</div>
+      <div class="ni" onclick="go('vv-subprod',this,'vv')"><span class="ni-icon">◈</span>Subproducción</div>
+      <div class="ni" onclick="go('vv-compras',this,'vv')"><span class="ni-icon">◎</span>Compras</div>
+      <div class="ni" onclick="go('vv-inventario',this,'vv')"><span class="ni-icon">◉</span>Inventario</div>
+      <div class="ni" onclick="go('vv-inv-inicial',this,'vv')"><span class="ni-icon">◈</span>Inv. inicial</div>
+      <div class="ni" onclick="go('vv-gastos',this,'vv')"><span class="ni-icon">◈</span>Gastos</div>
+      <div class="ni" onclick="go('vv-nomina',this,'vv')"><span class="ni-icon">◎</span>Nómina</div>
+      <div class="ni" onclick="go('vv-recetas',this,'vv')"><span class="ni-icon">◉</span>Recetas</div>
+      <div class="ni" onclick="go('vv-insumos',this,'vv')"><span class="ni-icon">◈</span>Insumos</div>
+    </div>
+  </div>
+
+  <!-- PAPAS / HELADOS -->
+  <div class="brand-section brand-ph">
+    <div class="brand-header" onclick="toggleBrand('ph')">
+      <div class="brand-dot" style="background:var(--ph);"></div>
+      <div class="brand-label">Papas / Helados</div>
+      <div class="brand-toggle" id="tog-ph">▶</div>
+    </div>
+    <div class="brand-nav" id="nav-ph" style="max-height:0;">
+      <div class="ni" onclick="go('ph-dash',this,'ph')"><span class="ni-icon">◈</span>Dashboard</div>
+      <div class="ni" onclick="go('ph-ventas',this,'ph')"><span class="ni-icon">◎</span>Ventas</div>
+      <div class="ni" onclick="go('ph-compras',this,'ph')"><span class="ni-icon">◉</span>Compras</div>
+      <div class="ni" onclick="go('ph-inventario',this,'ph')"><span class="ni-icon">◈</span>Inventario</div>
+      <div class="ni" onclick="go('ph-inv-inicial',this,'ph')"><span class="ni-icon">◎</span>Inv. inicial</div>
+      <div class="ni" onclick="go('ph-gastos',this,'ph')"><span class="ni-icon">◎</span>Gastos</div>
+      <div class="ni" onclick="go('ph-nomina',this,'ph')"><span class="ni-icon">◉</span>Nómina</div>
+      <div class="ni" onclick="go('ph-recetas',this,'ph')"><span class="ni-icon">◈</span>Recetas</div>
+      <div class="ni" onclick="go('ph-insumos',this,'ph')"><span class="ni-icon">◎</span>Insumos</div>
+    </div>
+  </div>
+
+  <!-- LASAGNA -->
+  <div class="brand-section brand-la">
+    <div class="brand-header" onclick="toggleBrand('la')">
+      <div class="brand-dot" style="background:var(--la);"></div>
+      <div class="brand-label">Lasagna</div>
+      <div class="brand-toggle" id="tog-la">▶</div>
+    </div>
+    <div class="brand-nav" id="nav-la" style="max-height:0;">
+      <div class="ni" onclick="go('la-dash',this,'la')"><span class="ni-icon">◈</span>Dashboard</div>
+      <div class="ni" onclick="go('la-ventas',this,'la')"><span class="ni-icon">◎</span>Ventas</div>
+      <div class="ni" onclick="go('la-compras',this,'la')"><span class="ni-icon">◉</span>Compras</div>
+      <div class="ni" onclick="go('la-inventario',this,'la')"><span class="ni-icon">◈</span>Inventario</div>
+      <div class="ni" onclick="go('la-inv-inicial',this,'la')"><span class="ni-icon">◎</span>Inv. inicial</div>
+      <div class="ni" onclick="go('la-gastos',this,'la')"><span class="ni-icon">◎</span>Gastos</div>
+      <div class="ni" onclick="go('la-nomina',this,'la')"><span class="ni-icon">◉</span>Nómina</div>
+      <div class="ni" onclick="go('la-recetas',this,'la')"><span class="ni-icon">◈</span>Recetas</div>
+      <div class="ni" onclick="go('la-insumos',this,'la')"><span class="ni-icon">◎</span>Insumos</div>
+    </div>
+  </div>
+</div><!-- end sidebar -->
+
+<!-- ════════════ MAIN ════════════ -->
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-brand" id="topbar-brand">
+      <div class="topbar-dot" id="topbar-dot" style="background:var(--corp);"></div>
+      <div class="topbar-name" id="topbar-name">Corporativo</div>
+    </div>
+    <div class="topbar-sep">·</div>
+    <div class="topbar-title" id="topbar-title">Dashboard</div>
+    <div class="topbar-right" id="topbar-right"></div>
+  </div>
+
+  <div class="content">
+
+  <!-- ══ CORPORATIVO ══ -->
+  <div class="page active" id="page-corp-dash">
+    <div class="kpis" style="grid-template-columns:repeat(4,1fr);">
+      <div class="kpi"><div class="kpi-l">Ingresos totales</div><div class="kpi-v" id="c-ingresos">—</div><div class="kpi-s">todas las marcas</div></div>
+      <div class="kpi"><div class="kpi-l">Gastos corporativos</div><div class="kpi-v" id="c-gastos">—</div></div>
+      <div class="kpi"><div class="kpi-l">Nómina bodega</div><div class="kpi-v" id="c-nomina">—</div></div>
+      <div class="kpi"><div class="kpi-l">Utilidad estimada</div><div class="kpi-v" id="c-utilidad">—</div></div>
+    </div>
+    <div class="brand-row">
+      <div class="brand-card" style="background:var(--vv-bg);border-color:var(--vv-border);">
+        <div style="font-size:11px;font-weight:600;color:var(--vv);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;">Volo Volo</div>
+        <div style="font-size:20px;font-weight:500;color:var(--text);" id="c-vv-ventas">—</div>
+        <div style="font-size:10px;color:var(--text3);margin-top:3px;">ventas registradas</div>
+        <div style="margin-top:10px;font-size:11px;color:var(--text2);">Torres · Centro · San Francisco</div>
+      </div>
+      <div class="brand-card" style="background:var(--ph-bg);border-color:var(--ph-border);">
+        <div style="font-size:11px;font-weight:600;color:var(--ph);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;">Papas / Helados</div>
+        <div style="font-size:20px;font-weight:500;color:var(--text);" id="c-ph-ventas">—</div>
+        <div style="font-size:10px;color:var(--text3);margin-top:3px;">ventas registradas</div>
+        <div style="margin-top:10px;font-size:11px;color:var(--text2);">Tienda física</div>
+      </div>
+      <div class="brand-card" style="background:var(--la-bg);border-color:var(--la-border);">
+        <div style="font-size:11px;font-weight:600;color:var(--la);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;">Lasagna</div>
+        <div style="font-size:20px;font-weight:500;color:var(--text);" id="c-la-ventas">—</div>
+        <div style="font-size:10px;color:var(--text3);margin-top:3px;">ventas registradas</div>
+        <div style="margin-top:10px;font-size:11px;color:var(--text2);">Delivery · Pedidos externos</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="page" id="page-corp-gastos">
+    <div class="toolbar">
+      <input type="month" id="corp-gastos-mes">
+      <select id="corp-gastos-cat-f"><option value="">Categoría</option><option>Renta bodega</option><option>CFE</option><option>Gas</option><option>Agua</option><option>Internet</option><option>Mantenimiento</option><option>Otros</option></select>
+      <button class="btn ml" onclick="showForm('form-corp-gasto')">+ Nuevo gasto</button>
+    </div>
+    <div class="form-box" id="form-corp-gasto" style="display:none;">
+      <div class="form-title">Gasto corporativo</div>
+      <div class="fgrid" style="grid-template-columns:repeat(3,1fr);">
+        <div class="fg"><label>Fecha</label><input type="date" id="cg-fecha"></div>
+        <div class="fg"><label>Categoría</label><select id="cg-cat"><option>Renta bodega</option><option>CFE</option><option>Gas</option><option>Agua</option><option>Internet</option><option>Mantenimiento</option><option>Otros</option></select></div>
+        <div class="fg"><label>Concepto</label><input type="text" id="cg-concepto" placeholder="Descripción"></div>
+        <div class="fg"><label>Monto ($)</label><input type="number" id="cg-monto" min="0" step="0.01" placeholder="0.00"></div>
+        <div class="fg"><label>Forma de pago</label><select id="cg-pago"><option>Efectivo</option><option>Transferencia</option><option>Tarjeta</option></select></div>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-primary" onclick="saveCorpGasto()">Guardar</button>
+        <button class="btn" onclick="hideForm('form-corp-gasto')">Cancelar</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="loading" id="load-corp-gastos"><div class="spin"></div> Cargando...</div>
+      <table class="tbl" id="tbl-corp-gastos" style="display:none;">
+        <thead><tr><th>Fecha</th><th>Categoría</th><th>Concepto</th><th>Monto</th><th>Pago</th></tr></thead>
+        <tbody id="tb-corp-gastos"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="page" id="page-corp-nomina">
+    <div class="toolbar">
+      <input type="month" id="corp-nom-mes">
+      <button class="btn ml" onclick="showForm('form-corp-nom')">+ Registrar nómina</button>
+    </div>
+    <div class="form-box" id="form-corp-nom" style="display:none;">
+      <div class="form-title">Nómina bodega / corporativo</div>
+      <div class="fgrid" style="grid-template-columns:repeat(3,1fr);">
+        <div class="fg"><label>Período</label><input type="month" id="cn-mes"></div>
+        <div class="fg"><label>Empleado / concepto</label><input type="text" id="cn-emp" placeholder="Nombre o puesto"></div>
+        <div class="fg"><label>Monto ($)</label><input type="number" id="cn-monto" min="0" step="0.01" placeholder="0.00"></div>
+        <div class="fg"><label>Notas</label><input type="text" id="cn-notas" placeholder="Opcional"></div>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-primary" onclick="saveCorpNomina()">Guardar</button>
+        <button class="btn" onclick="hideForm('form-corp-nom')">Cancelar</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="loading" id="load-corp-nomina"><div class="spin"></div> Cargando...</div>
+      <table class="tbl" id="tbl-corp-nomina" style="display:none;">
+        <thead><tr><th>Período</th><th>Empleado / concepto</th><th>Monto</th><th>Notas</th></tr></thead>
+        <tbody id="tb-corp-nomina"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ══ BRAND PAGES (generadas dinámicamente) ══ -->
+  <!-- Dashboard -->
+  <div class="page" id="page-vv-dash"><div class="loading"><div class="spin"></div> Cargando...</div></div>
+  <div class="page" id="page-ph-dash"><div class="loading"><div class="spin"></div> Cargando...</div></div>
+  <div class="page" id="page-la-dash"><div class="loading"><div class="spin"></div> Cargando...</div></div>
+
+  <!-- Ventas -->
+  <div class="page" id="page-vv-productos"></div>
+  <div class="page" id="page-vv-pedidos"></div>
+  <div class="page" id="page-vv-clientes"></div>
+  <div class="page" id="page-vv-ventas"></div>
+  <div class="page" id="page-ph-ventas"></div>
+  <div class="page" id="page-la-ventas"></div>
+
+  <!-- Producción (solo VV) -->
+  <div class="page" id="page-vv-produccion"></div>
+  <div class="page" id="page-vv-subprod"></div>
+
+  <!-- Compras -->
+  <div class="page" id="page-vv-compras"></div>
+  <div class="page" id="page-ph-compras"></div>
+  <div class="page" id="page-la-compras"></div>
+
+  <!-- Inventario -->
+  <div class="page" id="page-vv-inventario"></div>
+  <div class="page" id="page-vv-inv-inicial"></div>
+  <div class="page" id="page-ph-inventario"></div>
+  <div class="page" id="page-ph-inv-inicial"></div>
+  <div class="page" id="page-la-inventario"></div>
+  <div class="page" id="page-la-inv-inicial"></div>
+
+  <!-- Gastos -->
+  <div class="page" id="page-vv-gastos"></div>
+  <div class="page" id="page-ph-gastos"></div>
+  <div class="page" id="page-la-gastos"></div>
+
+  <!-- Nómina -->
+  <div class="page" id="page-vv-nomina"></div>
+  <div class="page" id="page-ph-nomina"></div>
+  <div class="page" id="page-la-nomina"></div>
+
+  <!-- Recetas -->
+  <div class="page" id="page-vv-recetas"></div>
+  <div class="page" id="page-ph-recetas"></div>
+  <div class="page" id="page-la-recetas"></div>
+
+  <!-- Insumos -->
+  <div class="page" id="page-vv-insumos"></div>
+  <div class="page" id="page-ph-insumos"></div>
+  <div class="page" id="page-la-insumos"></div>
+
+  </div><!-- end content -->
+</div><!-- end main -->
+</div><!-- end app -->
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, orderBy, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const FB = {
+  apiKey:"AIzaSyAvLTBGgztWGPquVp5Tyn3QySoVOZGmujo",
+  authDomain:"volo-volo-pue.firebaseapp.com",
+  projectId:"volo-volo-pue",
+  storageBucket:"volo-volo-pue.firebasestorage.app",
+  messagingSenderId:"861049446208",
+  appId:"1:861049446208:web:e5f68f6bc8241d1286a4a5"
+};
+const app = initializeApp(FB);
+const db = getFirestore(app);
+
+// ── BRAND CONFIG ──────────────────────────────────────────────
+const BRANDS = {
+  vv:  { name:'Volo Volo',       color:'var(--vv)',   col:'vv',  sucursales:['Torres','Centro','San Francisco'], canales:['Torres','Centro','San Francisco','Delivery','Pedidos externos'] },
+  ph:  { name:'Papas / Helados', color:'var(--ph)',   col:'ph',  sucursales:['Tienda'],  canales:['Tienda'] },
+  la:  { name:'Lasagna',         color:'var(--la)',   col:'la',  sucursales:[],          canales:['Delivery','Pedidos externos'] },
+  corp:{ name:'Corporativo',     color:'var(--corp)', col:'corp',sucursales:[],          canales:[] },
+};
+
+const PAGE_TITLES = {
+  'corp-dash':'Dashboard','corp-gastos':'Gastos corporativos','corp-nomina':'Nómina bodega',
+  'vv-dash':'Dashboard','vv-productos':'Precios y tarifas','vv-pedidos':'Pedidos externos','vv-clientes':'Clientes','vv-ventas':'Ventas / cortes','vv-produccion':'Producción',
+  'vv-subprod':'Subproducción','vv-compras':'Compras','vv-inventario':'Inventario','vv-inv-inicial':'Inventario inicial',
+  'vv-gastos':'Gastos','vv-nomina':'Nómina','vv-recetas':'Recetas','vv-insumos':'Insumos',
+  'ph-dash':'Dashboard','ph-ventas':'Ventas','ph-compras':'Compras','ph-inventario':'Inventario','ph-inv-inicial':'Inventario inicial',
+  'ph-gastos':'Gastos','ph-nomina':'Nómina','ph-recetas':'Recetas','ph-insumos':'Insumos',
+  'la-dash':'Dashboard','la-ventas':'Ventas','la-compras':'Compras','la-inventario':'Inventario','la-inv-inicial':'Inventario inicial',
+  'la-gastos':'Gastos','la-nomina':'Nómina','la-recetas':'Recetas','la-insumos':'Insumos',
+};
+
+// ── HELPERS ───────────────────────────────────────────────────
+const toast = msg => { const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2500); };
+const fmt$ = n => '$'+Number(n||0).toLocaleString('es-MX',{minimumFractionDigits:0,maximumFractionDigits:2});
+const fmtDate = ts => { if(!ts) return '—'; const d=ts.toDate?ts.toDate():new Date(ts); return d.toLocaleDateString('es-MX',{day:'2-digit',month:'short',year:'2-digit'}); };
+const today = () => new Date().toISOString().slice(0,10);
+const thisMonth = () => new Date().toISOString().slice(0,7);
+const showTbl = id => { const l=document.getElementById('load-'+id); const t=document.getElementById('tbl-'+id); if(l)l.style.display='none'; if(t)t.style.display='table'; };
+window.showForm = id => document.getElementById(id).style.display='block';
+window.hideForm = id => document.getElementById(id).style.display='none';
+window.toggleForm = id => { const el=document.getElementById(id); el.style.display=el.style.display==='none'?'block':'none'; };
+
+// ── NAVIGATION ────────────────────────────────────────────────
+let currentBrand = 'corp';
+let currentPage = 'corp-dash';
+
+window.toggleBrand = function(brand) {
+  const nav = document.getElementById('nav-'+brand);
+  const tog = document.getElementById('tog-'+brand);
+  const isOpen = nav.style.maxHeight !== '0px' && nav.style.maxHeight !== '';
+  // close all
+  ['corp','vv','ph','la'].forEach(b => {
+    document.getElementById('nav-'+b).style.maxHeight = '0px';
+    document.getElementById('tog-'+b).classList.remove('open');
+  });
+  if (!isOpen) {
+    nav.style.maxHeight = nav.scrollHeight + 'px';
+    tog.classList.add('open');
+  }
+};
+
+window.go = function(pageId, el, brand) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.ni').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-'+pageId).classList.add('active');
+  el.classList.add('active');
+  currentBrand = brand;
+  currentPage = pageId;
+  const b = BRANDS[brand];
+  document.getElementById('topbar-dot').style.background = b.color;
+  document.getElementById('topbar-name').textContent = b.name;
+  document.getElementById('topbar-title').textContent = PAGE_TITLES[pageId] || pageId;
+  loadPage(pageId, brand);
+};
+
+// ── PAGE LOADER ───────────────────────────────────────────────
+function loadPage(pageId, brand) {
+  const type = pageId.split('-').slice(1).join('-');
+  if (type === 'dash') loadDash(brand);
+  else if (type === 'insumos') loadInsumos(brand);
+  else if (type === 'recetas') loadRecetas(brand);
+  else if (type === 'compras') loadCompras(brand);
+  else if (type === 'inventario') loadInventario(brand);
+  else if (pageId.endsWith('-inv-inicial')) loadInvInicial(brand);
+  else if (type === 'gastos') loadGastos(brand);
+  else if (type === 'nomina') loadNomina(brand);
+  else if (type === 'ventas') loadVentas(brand);
+  else if (type === 'produccion') loadProduccion(brand);
+  else if (pageId==='vv-productos') loadProductos();
+  else if (pageId==='vv-pedidos') loadPedidos();
+  else if (pageId==='vv-clientes') loadClientes();
+  else if (type === 'subprod') loadSubprod(brand);
+  else if (pageId === 'corp-gastos') loadCorpGastos();
+  else if (pageId === 'corp-nomina') loadCorpNomina();
+  else if (pageId === 'corp-dash') loadCorpDash();
+}
+
+// ── BRAND PAGE BUILDER ────────────────────────────────────────
+function buildPage(containerId, html) {
+  document.getElementById('page-'+containerId).innerHTML = html;
+}
+
+// ── INSUMOS ───────────────────────────────────────────────────
+const INSUMOS = {}; // cache per brand
+
+async function loadInsumos(brand) {
+  const pid = brand+'-insumos';
+  const snap = await getDocs(query(collection(db,'insumos_'+brand), orderBy('nombre')));
+  INSUMOS[brand] = [];
+  snap.forEach(d => INSUMOS[brand].push({id:d.id,...d.data()}));
+  renderInsumos(brand);
+}
+
+function renderInsumos(brand) {
+  const pid = brand+'-insumos';
+  const b = BRANDS[brand];
+  const units = ['kg','g','lt','ml','pzs','lata','bolsa','bote','caja','costal','paquete','bulto','rollo','sobre'];
+  const cats = ['Carnes','Verduras','Lácteos','Abarrotes','Bebidas','Desechables','Otros'];
+  const unitOpts = units.map(u=>`<option>${u}</option>`).join('');
+  const catOpts = cats.map(c=>`<option>${c}</option>`).join('');
+
+  buildPage(pid, `
+    <div class="hint">Doble clic en cualquier celda de la tabla para editar directamente.</div>
+    <div class="toolbar">
+      <input type="text" placeholder="Buscar insumo..." oninput="filterTbl('tb-ins-${brand}',this.value)">
+      <select onchange="filterTbl('tb-ins-${brand}',null,this,1)"><option value="">Categoría</option>${cats.map(c=>`<option>${c}</option>`).join('')}</select>
+      <button class="btn ml" onclick="toggleForm('form-ins-${brand}')">+ Nuevo insumo</button>
+    </div>
+    <div class="form-box" id="form-ins-${brand}" style="display:none;">
+      <div class="form-title">Nuevo insumo — ${b.name}</div>
+      <div class="fgrid" style="grid-template-columns:repeat(3,1fr);">
+        <div class="fg"><label>Nombre</label><input type="text" id="ins-nom-${brand}" placeholder="Nombre del insumo"></div>
+        <div class="fg"><label>Categoría</label><select id="ins-cat-${brand}">${catOpts}</select></div>
+        <div class="fg"><label>Unidad de uso</label><select id="ins-uni-${brand}">${unitOpts}</select></div>
+        <div class="fg"><label>Unidad de compra</label><input type="text" id="ins-ucomp-${brand}" placeholder="ej: bulto, caja 10kg..."></div>
+        <div class="fg"><label>Factor conversión</label><input type="number" id="ins-factor-${brand}" value="1" min="0" step="0.001"></div>
+        <div class="fg"><label>Precio por unidad compra ($)</label><input type="number" id="ins-precio-${brand}" min="0" step="0.01" placeholder="0.00"></div>
+        <div class="fg"><label>Stock mínimo (unidad uso)</label><input type="number" id="ins-min-${brand}" min="0" step="0.01" placeholder="0"></div>
+        <div class="fg"><label>Proveedor habitual</label><input type="text" id="ins-prov-${brand}" placeholder="Nombre"></div>
+      </div>
+      <div class="note">Factor: 1 unidad de compra = factor × unidad de uso. Ej: 1 bulto = 25 kg → factor 25.</div>
+      <div class="form-actions" style="margin-top:10px;">
+        <button class="btn btn-primary" onclick="saveInsumo('${brand}')">Guardar insumo</button>
+        <button class="btn" onclick="hideForm('form-ins-${brand}')">Cancelar</button>
+      </div>
+    </div>
+    <div class="card">
+      <table class="tbl" id="tbl-ins-${brand}">
+        <thead><tr><th>Insumo</th><th>Categoría</th><th>Unidad uso</th><th>Unidad compra</th><th>Factor</th><th>Precio compra</th><th>Stock actual</th><th>Stock mín.</th><th>Proveedor</th></tr></thead>
+        <tbody id="tb-ins-${brand}"></tbody>
+      </table>
+    </div>`);
+  renderInsumosTable(brand);
+}
+
+function renderInsumosTable(brand) {
+  const tb = document.getElementById('tb-ins-'+brand);
+  if(!tb) return;
+  tb.innerHTML = '';
+  const data = [...(INSUMOS[brand]||[])].sort((a,b)=>(a.nombre||'').localeCompare(b.nombre||'','es'));
+  data.forEach(i => {
+    const pct = Math.min(100, Math.round((i.stock||0)/(i.stockMin||1)*100));
+    const bc = pct>=60?'b-ok':pct>=30?'b-warn':'b-bad';
+    const bs = pct>=60?'OK':pct>=30?'Bajo':'Crítico';
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${i.nombre}</td><td>${i.categoria||'—'}</td><td>${i.unidad||'—'}</td><td>${i.unidadCompra||'—'}</td><td>${i.factor||1}</td><td>${fmt$(i.precio||0)}</td><td>${(i.stock||0).toFixed(2)} ${i.unidad||''} <span class="badge ${bc}">${bs}</span></td><td>${i.stockMin||0} ${i.unidad||''}</td><td>${i.proveedor||'—'}</td>`;
+    // Inline edit
+    const fields = ['nombre','categoria','unidad','unidadCompra','factor','precio','stock','stockMin','proveedor'];
+    const types = ['text','text','text','text','number','number','number','number','text'];
+    fields.forEach((f,idx) => {
+      tr.cells[idx].setAttribute('data-edit','1');
+      tr.cells[idx].title = 'Doble clic para editar';
+      tr.cells[idx].addEventListener('dblclick', () => inlineEdit(tr.cells[idx], 'insumos_'+brand, i.id, f, i[f]||'', types[idx], brand));
+    });
+    tb.appendChild(tr);
+  });
+}
+
+async function inlineEdit(td, collName, docId, field, val, type, brand) {
+  if(td.querySelector('input,select')) return;
+  const orig = td.innerHTML;
+  let el;
+  if(type==='text') { el=document.createElement('input'); el.type='text'; el.value=val; }
+  else { el=document.createElement('input'); el.type='number'; el.value=val; el.step='0.001'; }
+  el.style.cssText='width:100%;font-size:11px;padding:3px 6px;border:1px solid var(--border2);border-radius:4px;background:var(--surface);color:var(--text);font-family:Geist,sans-serif;';
+  td.innerHTML=''; td.appendChild(el); el.focus(); el.select();
+  const commit = async () => {
+    const newVal = type==='number' ? parseFloat(el.value)||0 : el.value.trim();
+    if(String(newVal)===String(val)){td.innerHTML=orig;return;}
+    await updateDoc(doc(db,collName,docId),{[field]:newVal});
+    const cached = (INSUMOS[brand]||[]).find(x=>x.id===docId);
+    if(cached) cached[field]=newVal;
+    toast('Guardado');
+    renderInsumosTable(brand);
+  };
+  el.addEventListener('blur',commit);
+  el.addEventListener('keydown',e=>{if(e.key==='Enter')el.blur();if(e.key==='Escape')td.innerHTML=orig;});
+}
+
+window.saveInsumo = async function(brand) {
+  const nom = document.getElementById('ins-nom-'+brand).value.trim();
+  if(!nom){toast('Escribe el nombre');return;}
+  await addDoc(collection(db,'insumos_'+brand),{
+    nombre:nom,
+    categoria:document.getElementById('ins-cat-'+brand).value,
+    unidad:document.getElementById('ins-uni-'+brand).value,
+    unidadCompra:document.getElementById('ins-ucomp-'+brand).value.trim(),
+    factor:parseFloat(document.getElementById('ins-factor-'+brand).value)||1,
+    precio:parseFloat(document.getElementById('ins-precio-'+brand).value)||0,
+    stockMin:parseFloat(document.getElementById('ins-min-'+brand).value)||0,
+    proveedor:document.getElementById('ins-prov-'+brand).value.trim(),
+    stock:0, creadoEn:serverTimestamp()
+  });
+  toast('Insumo guardado');
+  hideForm('form-ins-'+brand);
+  loadInsumos(brand);
+};
+
+// ── RECETAS ───────────────────────────────────────────────────
+const RECETAS = {};
+
+async function loadRecetas(brand) {
+  // Ensure insumos are loaded so autocomplete works in the form
+  if(!INSUMOS[brand] || INSUMOS[brand].length===0) await loadInsumos(brand);
+  const snap = await getDocs(query(collection(db,'recetas_'+brand), orderBy('nombre')));
+  RECETAS[brand] = [];
+  snap.forEach(d => RECETAS[brand].push({id:d.id,...d.data()}));
+  renderRecetas(brand);
+}
+
+function renderRecetas(brand) {
+  const b = BRANDS[brand];
+  buildPage(brand+'-recetas', `
+    <div class="toolbar">
+      <input type="text" placeholder="Buscar receta..." oninput="filterTbl('tb-rec-${brand}',this.value)">
+      <select onchange="filterTbl('tb-rec-${brand}',null,this,1)"><option value="">Tipo</option><option>Platillo final</option><option>Subreceta</option></select>
+      <button class="btn ml" onclick="toggleForm('form-rec-${brand}')">+ Nueva receta</button>
+    </div>
+    <div class="form-box" id="form-rec-${brand}" style="display:none;">
+      <div class="form-title">Nueva receta — ${b.name}</div>
+      <div class="fgrid" style="grid-template-columns:1fr 1fr 1fr;">
+        <div class="fg"><label>Nombre</label><input type="text" id="rec-nom-${brand}" placeholder="Nombre de la receta"></div>
+        <div class="fg"><label>Tipo</label><select id="rec-tipo-${brand}"><option>Platillo final</option><option>Subreceta</option></select></div>
+        <div class="fg"><label>Precio de venta ($)</label><input type="number" id="rec-precio-${brand}" min="0" step="0.01" placeholder="Solo platillos finales"></div>
+        <div class="fg"><label>Tipo de rendimiento</label>
+          <select id="rec-rend-tipo-${brand}" onchange="toggleRend('${brand}')">
+            <option value="fijo">Fijo</option><option value="variable">Variable</option>
+          </select>
+        </div>
+        <div class="fg" id="rec-rend-val-wrap-${brand}"><label>Rendimiento por receta</label><input type="number" id="rec-rend-val-${brand}" value="1" min="0" step="0.01"></div>
+        <div class="fg"><label>Unidad rendimiento</label><input type="text" id="rec-rend-uni-${brand}" placeholder="kg, lt, pzs..."></div>
+      </div>
+      <div style="font-size:11px;font-weight:500;color:var(--text2);margin:10px 0 6px;text-transform:uppercase;letter-spacing:.04em;">Ingredientes</div>
+      <div id="ing-list-${brand}"></div>
+      <button class="btn-add-row" onclick="addIngRow('${brand}')">+ Agregar ingrediente</button>
+      <div class="form-actions" style="margin-top:12px;">
+        <button class="btn btn-primary" onclick="saveReceta('${brand}')">Guardar receta</button>
+        <button class="btn" onclick="hideForm('form-rec-${brand}')">Cancelar</button>
+      </div>
+    </div>
+    <div class="card">
+      <table class="tbl" id="tbl-rec-${brand}">
+        <thead><tr><th>Receta</th><th>Tipo</th><th>Rendimiento</th><th>Ingredientes</th><th>Precio venta</th><th></th></tr></thead>
+        <tbody id="tb-rec-${brand}"></tbody>
+      </table>
+    </div>`);
+  renderRecetasTable(brand);
+  addIngRow(brand); // add first row
+}
+
+function renderRecetasTable(brand) {
+  const tb = document.getElementById('tb-rec-'+brand);
+  if(!tb) return;
+  tb.innerHTML = '';
+  (RECETAS[brand]||[]).forEach(r => {
+    const bc = r.tipo==='Subreceta'?'b-info':'b-ok';
+    const rend = r.rendimientoTipo==='variable'
+      ? '<span class="badge b-warn">Variable</span>'
+      : `<span class="badge b-ok">Fijo ${r.rendimientoVal||1} ${r.rendimientoUni||''}</span>`;
+    const ings = (r.ingredientes||[]).map(i=>`${i.insumo} ${i.cantidad}${i.unidad}`).join(', ');
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${r.nombre}</td><td><span class="badge ${bc}">${r.tipo}</span></td><td>${rend}</td><td style="font-size:11px;color:var(--text2);">${ings||'—'}</td><td>${r.precioVenta?fmt$(r.precioVenta):'—'}</td><td><button onclick="editReceta('${r.id}','${brand}')" style="font-size:10px;padding:3px 8px;border:1px solid var(--border2);border-radius:var(--radius);background:var(--surface);color:var(--text2);cursor:pointer;">Editar</button></td>`;
+    tb.appendChild(tr);
+  });
+}
+
+window.editReceta = async function(id, brand) {
+  const r = (RECETAS[brand]||[]).find(x=>x.id===id);
+  if(!r) return;
+  // Fill form with existing data
+  const formEl = document.getElementById('form-rec-'+brand);
+  if(!formEl) return;
+  formEl.style.display='block';
+  formEl.scrollIntoView({behavior:'smooth'});
+  document.getElementById('rec-nom-'+brand).value = r.nombre||'';
+  document.getElementById('rec-tipo-'+brand).value = r.tipo||'Platillo final';
+  document.getElementById('rec-precio-'+brand).value = r.precioVenta||'';
+  document.getElementById('rec-rend-tipo-'+brand).value = r.rendimientoTipo||'fijo';
+  document.getElementById('rec-rend-val-'+brand).value = r.rendimientoVal||1;
+  document.getElementById('rec-rend-uni-'+brand).value = r.rendimientoUni||'';
+  toggleRend(brand);
+  // Fill ingredients
+  const ingList = document.getElementById('ing-list-'+brand);
+  ingList.innerHTML='';
+  for(const ing of (r.ingredientes||[])){
+    addIngRow(brand);
+    const rows = ingList.querySelectorAll('.rec-row');
+    const last = rows[rows.length-1];
+    last.querySelector('input[type=text]').value = ing.insumo||'';
+    last.querySelector('input[type=number]').value = ing.cantidad||0;
+    const uniEl = last.querySelector('.uni-lbl');
+    if(uniEl) uniEl.value=ing.unidad||'';
+  }
+  // Change save button to update mode
+  const saveBtn = formEl.querySelector('button.btn-primary');
+  if(saveBtn){
+    saveBtn.textContent='Actualizar receta';
+    saveBtn.onclick = ()=>updateReceta(id, brand);
+  }
+};
+
+window.updateReceta = async function(id, brand) {
+  const nom = document.getElementById('rec-nom-'+brand).value.trim();
+  if(!nom){toast('Escribe el nombre');return;}
+  const rows = document.querySelectorAll('#ing-list-'+brand+' .rec-row');
+  const ings=[];
+  rows.forEach(r=>{
+    const ins=r.querySelector('input[type=text]').value.trim();
+    const cant=parseFloat(r.querySelector('input[type=number]').value)||0;
+    const uniEl=r.querySelector('.uni-lbl');
+    const uni=(uniEl?.value||uniEl?.textContent||'').trim();
+    if(ins&&cant>0) ings.push({insumo:ins,cantidad:cant,unidad:uni});
+  });
+  await updateDoc(doc(db,'recetas_'+brand,id),{
+    nombre:nom,
+    tipo:document.getElementById('rec-tipo-'+brand).value,
+    precioVenta:parseFloat(document.getElementById('rec-precio-'+brand).value)||0,
+    rendimientoTipo:document.getElementById('rec-rend-tipo-'+brand).value,
+    rendimientoVal:parseFloat(document.getElementById('rec-rend-val-'+brand).value)||1,
+    rendimientoUni:document.getElementById('rec-rend-uni-'+brand).value.trim(),
+    ingredientes:ings,
+  });
+  toast('Receta actualizada');
+  hideForm('form-rec-'+brand);
+  // Reset save button
+  const saveBtn = document.querySelector('#form-rec-'+brand+' button.btn-primary');
+  if(saveBtn){saveBtn.textContent='Guardar receta';saveBtn.onclick=()=>saveReceta(brand);}
+  loadRecetas(brand);
+};
+
+window.toggleRend = function(brand) {
+  const tipo = document.getElementById('rec-rend-tipo-'+brand).value;
+  const wrap = document.getElementById('rec-rend-val-wrap-'+brand);
+  if(wrap) wrap.style.opacity = tipo==='fijo'?'1':'0.4';
+};
+
+window.addIngRow = function(brand) {
+  const list = document.getElementById('ing-list-'+brand);
+  if(!list) return;
+  const insumos = INSUMOS[brand]||[];
+  const recSubs = (RECETAS[brand]||[]).filter(r=>r.tipo==='Subreceta');
+  const allItems = [...insumos.map(i=>({label:i.nombre,unidad:i.unidad,sub:i.categoria})), ...recSubs.map(r=>({label:r.nombre,unidad:r.rendimientoUni||'',sub:'Subreceta'}))];
+
+  const row = document.createElement('div');
+  row.className = 'rec-row';
+  const rowId = 'row-'+Date.now()+Math.random().toString(36).slice(2,5);
+  row.innerHTML = `
+    <div class="ac-wrap" style="flex:2;position:relative;">
+      <input type="text" placeholder="Buscar insumo o subreceta..." style="width:100%;" autocomplete="off"
+        oninput="acIngRow(this,'${brand}')" onfocus="acIngRow(this,'${brand}')">
+      <div class="ac-list"></div>
+    </div>
+    <input type="number" placeholder="Cant." style="width:80px;" min="0" step="0.001">
+    <input type="text" class="uni-lbl" placeholder="unidad" readonly style="width:70px;font-size:12px;padding:6px 8px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface2);color:var(--text2);text-align:center;">
+    <button class="btn-rm" onclick="this.parentElement.remove()">✕</button>`;
+  list.appendChild(row);
+};
+
+window.acIngRow = function(input, brand) {
+  const q = (input.value||'').toLowerCase();
+  const acDiv = input.parentElement.querySelector('.ac-list');
+  const insumos = INSUMOS[brand]||[];
+  const recSubs = (RECETAS[brand]||[]).filter(r=>r.tipo==='Subreceta');
+  const all = [...insumos.map(i=>({label:i.nombre,unidad:(i.unidad||'').toLowerCase(),sub:i.categoria})), ...recSubs.map(r=>({label:r.nombre,unidad:(r.rendimientoUni||'').toLowerCase(),sub:'Subreceta'}))];
+  const matches = q ? all.filter(x=>x.label.toLowerCase().includes(q)).slice(0,14) : all.slice(0,14);
+  if(!matches.length){acDiv.style.display='none';return;}
+  acDiv.innerHTML = matches.map(m=>`<div class="ac-item" data-label="${m.label}" data-uni="${m.unidad}">${m.label}<small>${m.sub} · ${m.unidad}</small></div>`).join('');
+  acDiv.style.display = 'block';
+  acDiv.querySelectorAll('.ac-item').forEach(div => {
+    div.addEventListener('mousedown', e => {
+      e.preventDefault();
+      input.value = div.dataset.label;
+      const row = input.closest('.rec-row');
+      const lbl = row.querySelector('.uni-lbl');
+      if(lbl){ lbl.value!==undefined ? lbl.value=div.dataset.uni : lbl.textContent=div.dataset.uni; }
+      acDiv.style.display = 'none';
+    });
+  });
+};
+
+window.saveReceta = async function(brand) {
+  const nom = document.getElementById('rec-nom-'+brand).value.trim();
+  if(!nom){toast('Escribe el nombre');return;}
+  const rows = document.querySelectorAll('#ing-list-'+brand+' .rec-row');
+  const ings = [];
+  rows.forEach(r => {
+    const ins = r.querySelector('input[type=text]').value.trim();
+    const cant = parseFloat(r.querySelector('input[type=number]').value)||0;
+    const uniEl=r.querySelector('.uni-lbl'); const uni=(uniEl?.value||uniEl?.textContent||'').trim();
+    if(ins&&cant>0) ings.push({insumo:ins,cantidad:cant,unidad:uni});
+  });
+  await addDoc(collection(db,'recetas_'+brand),{
+    nombre:nom,
+    tipo:document.getElementById('rec-tipo-'+brand).value,
+    precioVenta:parseFloat(document.getElementById('rec-precio-'+brand).value)||0,
+    rendimientoTipo:document.getElementById('rec-rend-tipo-'+brand).value,
+    rendimientoVal:parseFloat(document.getElementById('rec-rend-val-'+brand).value)||1,
+    rendimientoUni:document.getElementById('rec-rend-uni-'+brand).value.trim(),
+    ingredientes:ings,
+    creadoEn:serverTimestamp()
+  });
+  toast('Receta guardada');
+  hideForm('form-rec-'+brand);
+  loadRecetas(brand);
+};
+
+// ── COMPRAS ───────────────────────────────────────────────────
+async function loadCompras(brand) {
+  const b = BRANDS[brand];
+  buildPage(brand+'-compras', `
+    <div class="toolbar">
+      <input type="text" placeholder="Buscar insumo o proveedor..." oninput="filterTbl('tb-comp-${brand}',this.value)">
+      <select onchange="filterTbl('tb-comp-${brand}',null,this,5)"><option value="">Forma de pago</option><option>Efectivo</option><option>Transferencia</option><option>Tarjeta</option><option>Crédito</option></select>
+      <button class="btn ml" onclick="toggleForm('form-comp-${brand}')">+ Nueva compra</button>
+    </div>
+    <div class="form-box" id="form-comp-${brand}" style="display:none;">
+      <div class="form-title">Registrar compra — ${b.name}</div>
+      <div class="fgrid" style="grid-template-columns:repeat(3,1fr);">
+        <div class="fg"><label>Fecha</label><input type="date" id="comp-fecha-${brand}" value="${today()}"></div>
+        <div class="fg"><label>Proveedor</label>
+          <div class="ac-wrap"><input type="text" id="comp-prov-${brand}" placeholder="Escribe proveedor..." autocomplete="off" oninput="acProv(this,'${brand}')" onfocus="acProv(this,'${brand}')"><div class="ac-list"></div></div>
+        </div>
+        <div class="fg"><label>Insumo</label>
+          <div class="ac-wrap"><input type="text" id="comp-ins-txt-${brand}" placeholder="Buscar insumo..." autocomplete="off" oninput="acIns(this,'${brand}')" onfocus="acIns(this,'${brand}')"><input type="hidden" id="comp-ins-id-${brand}"><div class="ac-list"></div></div>
+        </div>
+        <div class="fg"><label>Cantidad (unidad compra)</label><input type="number" id="comp-cant-${brand}" min="0" step="0.01" placeholder="0" oninput="calcConv('${brand}')"></div>
+        <div class="fg"><label>Unidad compra</label><input type="text" id="comp-uni-${brand}" readonly placeholder="automático" style="background:var(--surface2);color:var(--text2);"></div>
+        <div class="fg" id="comp-conv-wrap-${brand}" style="display:none;"><label>Equivale a</label><input type="text" id="comp-conv-${brand}" readonly style="background:var(--surface2);font-weight:500;color:var(--text);"></div>
+        <div class="fg"><label>Total ($)</label><input type="number" id="comp-total-${brand}" min="0" step="0.01" placeholder="0.00"></div>
+        <div class="fg"><label>Forma de pago</label><select id="comp-pago-${brand}"><option>Efectivo</option><option>Transferencia</option><option>Tarjeta</option><option>Crédito</option></select></div>
+        <div class="fg"><label>Folio / factura</label><input type="text" id="comp-folio-${brand}" placeholder="Opcional"></div>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-primary" onclick="saveCompra('${brand}')">Guardar y actualizar inventario</button>
+        <button class="btn" onclick="hideForm('form-comp-${brand}')">Cancelar</button>
+      </div>
+      <div class="note">La cantidad se convierte y suma al stock en unidad de uso automáticamente.</div>
+    </div>
+    <div class="card">
+      <div class="loading" id="load-comp-${brand}"><div class="spin"></div> Cargando...</div>
+      <table class="tbl" id="tbl-comp-${brand}" style="display:none;">
+        <thead><tr><th>Fecha</th><th>Proveedor</th><th>Insumo</th><th>Cantidad</th><th>Total</th><th>Pago</th><th>Folio</th></tr></thead>
+        <tbody id="tb-comp-${brand}"></tbody>
+      </table>
+    </div>`);
+
+  if(!INSUMOS[brand]) await loadInsumos(brand);
+  const snap = await getDocs(query(collection(db,'compras_'+brand), orderBy('creadoEn','desc')));
+  const tb = document.getElementById('tb-comp-'+brand);
+  tb.innerHTML='';
+  snap.forEach(d => {
+    const c={id:d.id,...d.data()};
+    const bc=c.pago==='Crédito'?'b-warn':c.pago==='Efectivo'?'b-ok':'b-info';
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${c.fecha||fmtDate(c.creadoEn)}</td><td>${c.proveedor||'—'}</td><td>${c.insumoNombre||'—'}</td><td>${c.cantidadCompra||c.cantidad||0} ${c.unidadCompra||''}</td><td>${fmt$(c.total||0)}</td><td><span class="badge ${bc}">${c.pago||'—'}</span></td><td>${c.folio||'—'}</td>`;
+    tb.appendChild(tr);
+  });
+  document.getElementById('load-comp-'+brand).style.display='none';
+  document.getElementById('tbl-comp-'+brand).style.display='table';
+}
+
+window.acProv = function(input, brand) {
+  const acDiv = input.parentElement.querySelector('.ac-list');
+  const q = (input.value||'').toLowerCase();
+  const provs = new Set();
+  document.querySelectorAll('#tb-comp-'+brand+' td:nth-child(2)').forEach(td=>{if(td.textContent&&td.textContent!=='—')provs.add(td.textContent);});
+  const matches = [...provs].filter(p=>p.toLowerCase().includes(q)).slice(0,8).map(p=>({label:p}));
+  if(input.value.trim()&&![...provs].some(p=>p.toLowerCase()===q)) matches.unshift({label:input.value.trim(),sub:'nuevo'});
+  if(!matches.length){acDiv.style.display='none';return;}
+  acDiv.innerHTML=matches.map(m=>`<div class="ac-item">${m.label}${m.sub?`<small>${m.sub}</small>`:''}</div>`).join('');
+  acDiv.style.display='block';
+  acDiv.querySelectorAll('.ac-item').forEach(div=>{
+    div.addEventListener('mousedown',e=>{e.preventDefault();input.value=div.textContent.replace('nuevo','').trim();acDiv.style.display='none';});
+  });
+};
+
+window.acIns = function(input, brand) {
+  const acDiv = input.parentElement.querySelector('.ac-list');
+  const q = (input.value||'').toLowerCase();
+  if(!q){acDiv.style.display='none';return;}
+  const matches = (INSUMOS[brand]||[]).filter(i=>i.nombre.toLowerCase().includes(q)).slice(0,12);
+  if(!matches.length){acDiv.style.display='none';return;}
+  acDiv.innerHTML=matches.map(m=>`<div class="ac-item" data-id="${m.id}" data-uni="${m.unidadCompra||m.unidad||''}" data-uso="${m.unidad||''}" data-factor="${m.factor||1}">${m.nombre}<small>${m.unidadCompra||m.unidad}</small></div>`).join('');
+  acDiv.style.display='block';
+  acDiv.querySelectorAll('.ac-item').forEach(div=>{
+    div.addEventListener('mousedown',e=>{
+      e.preventDefault();
+      input.value=div.textContent.split('\n')[0].trim().replace(/\s+.+/,'');
+      document.getElementById('comp-ins-id-'+brand).value=div.dataset.id;
+      document.getElementById('comp-uni-'+brand).value=div.dataset.uni;
+      window['_compFactor_'+brand]=parseFloat(div.dataset.factor)||1;
+      window['_compUso_'+brand]=div.dataset.uso;
+      calcConv(brand);
+      acDiv.style.display='none';
+    });
+  });
+};
+
+window.calcConv = function(brand) {
+  const cant = parseFloat(document.getElementById('comp-cant-'+brand).value)||0;
+  const factor = window['_compFactor_'+brand]||1;
+  const uso = window['_compUso_'+brand]||'';
+  const wrap = document.getElementById('comp-conv-wrap-'+brand);
+  const lbl = document.getElementById('comp-conv-'+brand);
+  if(cant>0&&factor!==1&&wrap&&lbl){
+    wrap.style.display='block';
+    lbl.value=`${Math.round(cant*factor*1000)/1000} ${uso}`;
+  } else if(wrap) wrap.style.display='none';
+};
+
+window.saveCompra = async function(brand) {
+  const insId = document.getElementById('comp-ins-id-'+brand).value;
+  const cant = parseFloat(document.getElementById('comp-cant-'+brand).value)||0;
+  if(!insId||cant<=0){toast('Selecciona un insumo e ingresa cantidad');return;}
+  const ins = (INSUMOS[brand]||[]).find(i=>i.id===insId);
+  const factor = ins?.factor||1;
+  const cantUso = Math.round(cant*factor*1000)/1000;
+  const total = parseFloat(document.getElementById('comp-total-'+brand).value)||0;
+  await addDoc(collection(db,'compras_'+brand),{
+    fecha:document.getElementById('comp-fecha-'+brand).value,
+    proveedor:document.getElementById('comp-prov-'+brand).value,
+    insumoId:insId, insumoNombre:ins?.nombre||'',
+    cantidadCompra:cant, unidadCompra:ins?.unidadCompra||ins?.unidad||'',
+    cantidadUso:cantUso, unidadUso:ins?.unidad||'',
+    total, pago:document.getElementById('comp-pago-'+brand).value,
+    folio:document.getElementById('comp-folio-'+brand).value,
+    creadoEn:serverTimestamp()
+  });
+  // Update stock
+  if(ins){
+    const newStock = Math.round(((ins.stock||0)+cantUso)*1000)/1000;
+    await updateDoc(doc(db,'insumos_'+brand,insId),{stock:newStock});
+    ins.stock=newStock;
+    // auto-register gasto if desechable
+    if(ins.categoria==='Desechables'){
+      await addDoc(collection(db,'gastos_'+brand),{
+        fecha:document.getElementById('comp-fecha-'+brand).value,
+        categoria:'Desechables',
+        concepto:`Compra ${ins.nombre} — ${cant} ${ins.unidadCompra||ins.unidad}`,
+        monto:total, pago:document.getElementById('comp-pago-'+brand).value,
+        creadoEn:serverTimestamp()
+      });
+    }
+  }
+  toast('Compra guardada'+((ins?.categoria==='Desechables')?' + gasto desechable registrado':''));
+  hideForm('form-comp-'+brand);
+  document.getElementById('comp-ins-txt-'+brand).value='';
+  document.getElementById('comp-ins-id-'+brand).value='';
+  loadCompras(brand);
+};
+
+// ── GASTOS ────────────────────────────────────────────────────
+async function loadGastos(brand) {
+  const b = BRANDS[brand];
+  const cats = brand==='vv'
+    ? ['Renta','CFE','Gas','Agua','Limpieza','Nómina','Desechables','Cuota corporativo','Otros']
+    : ['Renta','CFE','Gas','Agua','Limpieza','Nómina','Desechables','Cuota corporativo','Otros'];
+  buildPage(brand+'-gastos', `
+    <div class="toolbar">
+      <input type="text" placeholder="Buscar gasto..." oninput="filterTbl('tb-gas-${brand}',this.value)">
+      <select onchange="filterTbl('tb-gas-${brand}',null,this,2)">${['<option value="">Categoría</option>',...cats.map(c=>`<option>${c}</option>`)].join('')}</select>
+      <input type="month" id="gas-mes-${brand}" value="${thisMonth()}">
+      <button class="btn ml" onclick="toggleForm('form-gas-${brand}')">+ Nuevo gasto</button>
+    </div>
+    <div class="form-box" id="form-gas-${brand}" style="display:none;">
+      <div class="form-title">Gasto — ${b.name}</div>
+      <div class="fgrid" style="grid-template-columns:repeat(3,1fr);">
+        <div class="fg"><label>Fecha</label><input type="date" id="gas-fecha-${brand}" value="${today()}"></div>
+        <div class="fg"><label>Categoría</label><select id="gas-cat-${brand}">${cats.map(c=>`<option>${c}</option>`).join('')}</select></div>
+        <div class="fg"><label>Concepto</label><input type="text" id="gas-concepto-${brand}" placeholder="Descripción"></div>
+        <div class="fg"><label>Monto ($)</label><input type="number" id="gas-monto-${brand}" min="0" step="0.01" placeholder="0.00"></div>
+        <div class="fg"><label>Forma de pago</label><select id="gas-pago-${brand}"><option>Efectivo</option><option>Transferencia</option><option>Tarjeta</option></select></div>
+        ${brand==='vv'?`<div class="fg"><label>Sucursal</label><select id="gas-suc-${brand}"><option value="">General</option>${b.sucursales.map(s=>`<option>${s}</option>`).join('')}</select></div>`:''}
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-primary" onclick="saveGasto('${brand}')">Guardar gasto</button>
+        <button class="btn" onclick="hideForm('form-gas-${brand}')">Cancelar</button>
+      </div>
+    </div>
+    <div class="kpis" style="grid-template-columns:repeat(3,1fr);margin-bottom:14px;">
+      <div class="kpi"><div class="kpi-l">Total del mes</div><div class="kpi-v" id="gas-total-${brand}">—</div></div>
+      <div class="kpi"><div class="kpi-l">Registros</div><div class="kpi-v" id="gas-count-${brand}">—</div></div>
+      <div class="kpi"><div class="kpi-l">Mayor gasto</div><div class="kpi-v" id="gas-top-${brand}">—</div></div>
+    </div>
+    <div class="card">
+      <div class="loading" id="load-gas-${brand}"><div class="spin"></div> Cargando...</div>
+      <table class="tbl" id="tbl-gas-${brand}" style="display:none;">
+        <thead><tr><th>Fecha</th><th>Concepto</th><th>Categoría</th><th>Monto</th><th>Pago</th>${brand==='vv'?'<th>Sucursal</th>':''}</tr></thead>
+        <tbody id="tb-gas-${brand}"></tbody>
+      </table>
+    </div>`);
+
+  const snap = await getDocs(query(collection(db,'gastos_'+brand), orderBy('creadoEn','desc')));
+  const tb = document.getElementById('tb-gas-'+brand);
+  tb.innerHTML='';
+  let total=0, topCat={}, count=0;
+  snap.forEach(d=>{
+    const g={id:d.id,...d.data()};
+    total+=g.monto||0; count++;
+    topCat[g.categoria]=(topCat[g.categoria]||0)+(g.monto||0);
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${g.fecha||fmtDate(g.creadoEn)}</td><td>${g.concepto||'—'}</td><td>${g.categoria||'—'}</td><td>${fmt$(g.monto||0)}</td><td>${g.pago||'—'}</td>${brand==='vv'?`<td>${g.sucursal||'—'}</td>`:''}`;
+    tb.appendChild(tr);
+  });
+  document.getElementById('gas-total-'+brand).textContent=fmt$(total);
+  document.getElementById('gas-count-'+brand).textContent=count;
+  const topEntry=Object.entries(topCat).sort((a,b)=>b[1]-a[1])[0];
+  document.getElementById('gas-top-'+brand).textContent=topEntry?topEntry[0]:'—';
+  document.getElementById('load-gas-'+brand).style.display='none';
+  document.getElementById('tbl-gas-'+brand).style.display='table';
+}
+
+window.saveGasto = async function(brand) {
+  const monto = parseFloat(document.getElementById('gas-monto-'+brand).value)||0;
+  const concepto = document.getElementById('gas-concepto-'+brand).value.trim();
+  if(!concepto||monto<=0){toast('Ingresa concepto y monto');return;}
+  const data = {
+    fecha:document.getElementById('gas-fecha-'+brand).value,
+    categoria:document.getElementById('gas-cat-'+brand).value,
+    concepto, monto, pago:document.getElementById('gas-pago-'+brand).value,
+    creadoEn:serverTimestamp()
+  };
+  if(brand==='vv'){const sucEl=document.getElementById('gas-suc-'+brand); if(sucEl)data.sucursal=sucEl.value;}
+  await addDoc(collection(db,'gastos_'+brand),data);
+  toast('Gasto guardado'); hideForm('form-gas-'+brand); loadGastos(brand);
+};
+
+// ── NÓMINA ────────────────────────────────────────────────────
+async function loadNomina(brand) {
+  const b = BRANDS[brand];
+  buildPage(brand+'-nomina', `
+    <div class="toolbar">
+      <input type="month" id="nom-mes-${brand}" value="${thisMonth()}">
+      <input type="text" placeholder="Buscar empleado..." oninput="filterTbl('tb-nom-${brand}',this.value)">
+      ${brand==='vv'?`<select onchange="filterTbl('tb-nom-${brand}',null,this,3)"><option value="">Sucursal</option>${b.sucursales.map(s=>`<option>${s}</option>`).join('')}</select>`:''}
+      <button class="btn ml" onclick="toggleForm('form-nom-${brand}')">+ Registrar nómina</button>
+    </div>
+    <div class="form-box" id="form-nom-${brand}" style="display:none;">
+      <div class="form-title">Nómina — ${b.name}</div>
+      <div class="fgrid" style="grid-template-columns:repeat(3,1fr);">
+        <div class="fg"><label>Período</label><input type="month" id="nom-per-${brand}" value="${thisMonth()}"></div>
+        <div class="fg"><label>Empleado</label><input type="text" id="nom-emp-${brand}" placeholder="Nombre"></div>
+        <div class="fg"><label>Puesto</label><input type="text" id="nom-puesto-${brand}" placeholder="Cargo"></div>
+        <div class="fg"><label>Quincena / monto ($)</label><input type="number" id="nom-monto-${brand}" min="0" step="0.01" placeholder="0.00"></div>
+        <div class="fg"><label>Tipo</label><select id="nom-tipo-${brand}"><option>Quincenal</option><option>Semanal</option><option>Mensual</option><option>Eventual</option></select></div>
+        ${brand==='vv'?`<div class="fg"><label>Sucursal</label><select id="nom-suc-${brand}"><option value="">General</option>${b.sucursales.map(s=>`<option>${s}</option>`).join('')}</select></div>`:''}
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-primary" onclick="saveNomina('${brand}')">Guardar</button>
+        <button class="btn" onclick="hideForm('form-nom-${brand}')">Cancelar</button>
+      </div>
+    </div>
+    <div class="kpis" style="grid-template-columns:repeat(3,1fr);margin-bottom:14px;">
+      <div class="kpi"><div class="kpi-l">Total nómina</div><div class="kpi-v" id="nom-total-${brand}">—</div></div>
+      <div class="kpi"><div class="kpi-l">Empleados</div><div class="kpi-v" id="nom-emps-${brand}">—</div></div>
+      <div class="kpi"><div class="kpi-l">Período</div><div class="kpi-v" id="nom-per-lbl-${brand}">—</div></div>
+    </div>
+    <div class="card">
+      <div class="loading" id="load-nom-${brand}"><div class="spin"></div> Cargando...</div>
+      <table class="tbl" id="tbl-nom-${brand}" style="display:none;">
+        <thead><tr><th>Período</th><th>Empleado</th><th>Puesto</th><th>${brand==='vv'?'Sucursal':'Tipo'}</th><th>Monto</th></tr></thead>
+        <tbody id="tb-nom-${brand}"></tbody>
+      </table>
+    </div>`);
+
+  const snap = await getDocs(query(collection(db,'nomina_'+brand), orderBy('creadoEn','desc')));
+  const tb = document.getElementById('tb-nom-'+brand);
+  tb.innerHTML=''; let total=0; const emps=new Set();
+  snap.forEach(d=>{
+    const n={id:d.id,...d.data()};
+    total+=n.monto||0; if(n.empleado)emps.add(n.empleado);
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${n.periodo||'—'}</td><td>${n.empleado||'—'}</td><td>${n.puesto||'—'}</td><td>${brand==='vv'?(n.sucursal||'General'):n.tipo||'—'}</td><td>${fmt$(n.monto||0)}</td>`;
+    tb.appendChild(tr);
+  });
+  document.getElementById('nom-total-'+brand).textContent=fmt$(total);
+  document.getElementById('nom-emps-'+brand).textContent=emps.size;
+  document.getElementById('nom-per-lbl-'+brand).textContent=thisMonth();
+  document.getElementById('load-nom-'+brand).style.display='none';
+  document.getElementById('tbl-nom-'+brand).style.display='table';
+}
+
+window.saveNomina = async function(brand) {
+  const monto = parseFloat(document.getElementById('nom-monto-'+brand).value)||0;
+  const emp = document.getElementById('nom-emp-'+brand).value.trim();
+  if(!emp||monto<=0){toast('Ingresa empleado y monto');return;}
+  const data = {
+    periodo:document.getElementById('nom-per-'+brand).value,
+    empleado:emp,
+    puesto:document.getElementById('nom-puesto-'+brand).value,
+    monto, tipo:document.getElementById('nom-tipo-'+brand).value,
+    creadoEn:serverTimestamp()
+  };
+  if(brand==='vv'){const s=document.getElementById('nom-suc-'+brand);if(s)data.sucursal=s.value;}
+  await addDoc(collection(db,'nomina_'+brand),data);
+  toast('Nómina guardada'); hideForm('form-nom-'+brand); loadNomina(brand);
+};
+
+// ── VENTAS ────────────────────────────────────────────────────
+async function loadVentas(brand) {
+  const b = BRANDS[brand];
+  buildPage(brand+'-ventas', `
+    <div class="toolbar">
+      <input type="text" placeholder="Buscar..." oninput="filterTbl('tb-vta-${brand}',this.value)">
+      <select onchange="filterTbl('tb-vta-${brand}',null,this,1)"><option value="">Canal</option>${b.canales.map(c=>`<option>${c}</option>`).join('')}</select>
+      <input type="date" value="${today()}">
+      <button class="btn ml" onclick="toggleForm('form-vta-${brand}')">+ Registrar corte</button>
+    </div>
+    <div class="form-box" id="form-vta-${brand}" style="display:none;">
+      <div class="form-title">Registrar corte — ${b.name}</div>
+      <div class="fgrid" style="grid-template-columns:repeat(3,1fr);">
+        <div class="fg"><label>Fecha</label><input type="date" id="vta-fecha-${brand}" value="${today()}"></div>
+        <div class="fg"><label>Canal / sucursal</label><select id="vta-canal-${brand}">${b.canales.map(c=>`<option>${c}</option>`).join('')}</select></div>
+        <div class="fg"><label>Turno</label><select id="vta-turno-${brand}"><option>Mañana</option><option>Tarde</option><option>Completo</option></select></div>
+        <div class="fg"><label>Ventas totales ($)</label><input type="number" id="vta-total-${brand}" min="0" step="0.01" placeholder="0.00"></div>
+        <div class="fg"><label>Efectivo ($)</label><input type="number" id="vta-ef-${brand}" min="0" step="0.01" placeholder="0.00"></div>
+        <div class="fg"><label>Tarjeta / transferencia ($)</label><input type="number" id="vta-tj-${brand}" min="0" step="0.01" placeholder="0.00"></div>
+        <div class="fg"><label>Piezas vendidas</label><input type="number" id="vta-pzs-${brand}" min="0" placeholder="0"></div>
+        <div class="fg"><label>Responsable</label><input type="text" id="vta-resp-${brand}" placeholder="Nombre"></div>
+        <div class="fg"><label>Notas</label><input type="text" id="vta-notas-${brand}" placeholder="Opcional"></div>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-primary" onclick="saveVenta('${brand}')">Guardar corte</button>
+        <button class="btn" onclick="hideForm('form-vta-${brand}')">Cancelar</button>
+      </div>
+    </div>
+    <div class="kpis" style="grid-template-columns:repeat(4,1fr);margin-bottom:14px;">
+      <div class="kpi"><div class="kpi-l">Ventas totales</div><div class="kpi-v" id="vta-sum-${brand}">—</div></div>
+      <div class="kpi"><div class="kpi-l">Piezas</div><div class="kpi-v" id="vta-pzs-sum-${brand}">—</div></div>
+      <div class="kpi"><div class="kpi-l">Efectivo</div><div class="kpi-v" id="vta-ef-sum-${brand}">—</div></div>
+      <div class="kpi"><div class="kpi-l">Tarjeta</div><div class="kpi-v" id="vta-tj-sum-${brand}">—</div></div>
+    </div>
+    <div class="card">
+      <div class="loading" id="load-vta-${brand}"><div class="spin"></div> Cargando...</div>
+      <table class="tbl" id="tbl-vta-${brand}" style="display:none;">
+        <thead><tr><th>Fecha</th><th>Canal</th><th>Turno</th><th>Ventas</th><th>Efectivo</th><th>Tarjeta</th><th>Piezas</th><th>Responsable</th></tr></thead>
+        <tbody id="tb-vta-${brand}"></tbody>
+      </table>
+    </div>`);
+
+  const snap = await getDocs(query(collection(db,'ventas_'+brand), orderBy('creadoEn','desc')));
+  const tb=document.getElementById('tb-vta-'+brand);
+  tb.innerHTML=''; let sum=0,pzs=0,ef=0,tj=0;
+  snap.forEach(d=>{
+    const v={id:d.id,...d.data()};
+    sum+=v.total||0; pzs+=v.piezas||0; ef+=v.efectivo||0; tj+=v.tarjeta||0;
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${v.fecha||fmtDate(v.creadoEn)}</td><td>${v.canal||'—'}</td><td>${v.turno||'—'}</td><td>${fmt$(v.total||0)}</td><td>${fmt$(v.efectivo||0)}</td><td>${fmt$(v.tarjeta||0)}</td><td>${v.piezas||0}</td><td>${v.responsable||'—'}</td>`;
+    tb.appendChild(tr);
+  });
+  document.getElementById('vta-sum-'+brand).textContent=fmt$(sum);
+  document.getElementById('vta-pzs-sum-'+brand).textContent=pzs;
+  document.getElementById('vta-ef-sum-'+brand).textContent=fmt$(ef);
+  document.getElementById('vta-tj-sum-'+brand).textContent=fmt$(tj);
+  document.getElementById('load-vta-'+brand).style.display='none';
+  document.getElementById('tbl-vta-'+brand).style.display='table';
+}
+
+window.saveVenta = async function(brand) {
+  const total = parseFloat(document.getElementById('vta-total-'+brand).value)||0;
+  if(total<=0){toast('Ingresa el total de ventas');return;}
+  await addDoc(collection(db,'ventas_'+brand),{
+    fecha:document.getElementById('vta-fecha-'+brand).value,
+    canal:document.getElementById('vta-canal-'+brand).value,
+    turno:document.getElementById('vta-turno-'+brand).value,
+    total, efectivo:parseFloat(document.getElementById('vta-ef-'+brand).value)||0,
+    tarjeta:parseFloat(document.getElementById('vta-tj-'+brand).value)||0,
+    piezas:parseInt(document.getElementById('vta-pzs-'+brand).value)||0,
+    responsable:document.getElementById('vta-resp-'+brand).value,
+    notas:document.getElementById('vta-notas-'+brand).value,
+    creadoEn:serverTimestamp()
+  });
+  toast('Corte guardado'); hideForm('form-vta-'+brand); loadVentas(brand);
+};
+
+// ── INVENTARIO ────────────────────────────────────────────────
+async function loadInventario(brand) {
+  if(!INSUMOS[brand]) await loadInsumos(brand);
+  buildPage(brand+'-inventario', `
+    <div class="toolbar">
+      <input type="text" placeholder="Buscar insumo..." oninput="filterInv('${brand}',this.value)">
+      <select onchange="filterInv('${brand}',null,this.value)"><option value="">Categoría</option><option>Carnes</option><option>Verduras</option><option>Lácteos</option><option>Abarrotes</option><option>Bebidas</option><option>Desechables</option><option>Otros</option></select>
+    </div>
+    <div class="kpis" style="grid-template-columns:repeat(3,1fr);margin-bottom:14px;">
+      <div class="kpi"><div class="kpi-l">Insumos en catálogo</div><div class="kpi-v" id="inv-total-${brand}">—</div></div>
+      <div class="kpi"><div class="kpi-l dn">Alertas críticas</div><div class="kpi-v dn" id="inv-alertas-${brand}">—</div></div>
+      <div class="kpi"><div class="kpi-l">Valor estimado</div><div class="kpi-v" id="inv-valor-${brand}">—</div></div>
+    </div>
+    <div class="inv-grid" id="inv-grid-${brand}"></div>`);
+  renderInventario(brand,'','');
+}
+
+window.filterInv = function(brand, txt, cat) {
+  renderInventario(brand, txt||'', cat||'');
+};
+
+function renderInventario(brand, txt, cat) {
+  const grid = document.getElementById('inv-grid-'+brand);
+  if(!grid) return;
+  grid.innerHTML='';
+  let alertas=0, valor=0;
+  const data = [...(INSUMOS[brand]||[])].filter(i=>{
+    const mT = !txt || i.nombre.toLowerCase().includes(txt.toLowerCase());
+    const mC = !cat || i.categoria===cat;
+    return mT&&mC;
+  }).sort((a,b)=>(a.nombre||'').localeCompare(b.nombre||'','es'));
+  data.forEach(i=>{
+    const stock=i.stock||0; const min=i.stockMin||1;
+    const pct=Math.min(100,Math.round(stock/min*100));
+    const col=pct>=60?'#2A7A4B':pct>=30?'#8C6A1A':'#8C1A1A';
+    const bc=pct>=60?'b-ok':pct>=30?'b-warn':'b-bad';
+    const bs=pct>=60?'OK':pct>=30?'Bajo':'Crítico';
+    if(pct<60)alertas++;
+    valor+=stock*(i.precio||0);
+    const card=document.createElement('div');
+    card.className='inv-card';
+    card.innerHTML=`<div class="inv-card-name">${i.nombre}</div><div class="inv-card-cat">${i.categoria||'—'} · ${i.unidad||''}</div><div class="inv-bar"><div class="inv-bar-fill" style="width:${pct}%;background:${col};"></div></div><div class="inv-nums"><span>${stock.toFixed(2)} ${i.unidad||''} <span class="badge ${bc}">${bs}</span></span><span>Mín: ${min} ${i.unidad||''}</span></div>`;
+    grid.appendChild(card);
+  });
+  const tot=document.getElementById('inv-total-'+brand);
+  const alt=document.getElementById('inv-alertas-'+brand);
+  const val=document.getElementById('inv-valor-'+brand);
+  if(tot)tot.textContent=(INSUMOS[brand]||[]).length;
+  if(alt)alt.textContent=alertas;
+  if(val)val.textContent=fmt$(Math.round(valor));
+}
+
+// ── PRODUCCIÓN VOLO VOLO ──────────────────────────────────────
+async function loadProduccion(brand) {
+  if(brand!=='vv') return;
+  if(!RECETAS[brand]) await loadRecetas(brand);
+  const b = BRANDS[brand];
+  const platillos = (RECETAS[brand]||[]).filter(r=>r.tipo==='Platillo final');
+
+  // Cards: input piezas, show rendimiento (piezas por receta)
+  const cards = platillos.map(p=>{
+    const rend = p.rendimientoVal||1;
+    return `
+    <div class="prod-card">
+      <div class="prod-card-name">${p.nombre}</div>
+      <div class="prod-card-sub" style="color:var(--text3);">Rinde ${rend} pza${rend>1?'s':''} por receta</div>
+      <input class="prod-qty" type="number" id="prod-${p.id}" value="0" min="0" step="0.5" onfocus="this.select()" oninput="calcRecetas('${p.id}',${rend})">
+      <div style="text-align:center;font-size:10px;color:var(--text3);margin-top:4px;">piezas → <span id="prod-recetas-${p.id}" style="color:var(--text2);font-weight:500;">0 recetas</span></div>
+    </div>`;}).join('');
+
+  buildPage('vv-produccion', `
+    <div class="toolbar" style="align-items:center;">
+      <input type="date" id="prod-fecha" value="${today()}">
+      <select id="prod-suc">${b.sucursales.map(s=>`<option>${s}</option>`).join('')}</select>
+      <button class="btn btn-primary ml" onclick="saveProduccion()">Guardar producción del día</button>
+    </div>
+    <div class="note" style="margin-bottom:12px;">Ingresa las <strong>piezas</strong> producidas. El sistema calcula automáticamente cuántas recetas se elaboraron y descuenta los insumos correspondientes.</div>
+    <div class="prod-grid">${cards||'<div style="color:var(--text3);font-size:12px;padding:20px;">Primero da de alta platillos finales en Recetas.</div>'}</div>
+    <div style="font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;">Historial</div>
+    <div class="card">
+      <div class="loading" id="load-vv-prod"><div class="spin"></div> Cargando...</div>
+      <table class="tbl" id="tbl-vv-prod" style="display:none;">
+        <thead><tr><th>Fecha</th><th>Sucursal</th><th>Platillo</th><th>Piezas</th><th>Insumos descontados</th></tr></thead>
+        <tbody id="tb-vv-prod"></tbody>
+      </table>
+    </div>`);
+
+  const snap = await getDocs(query(collection(db,'produccion_vv'), orderBy('creadoEn','desc')));
+  const tb=document.getElementById('tb-vv-prod');
+  tb.innerHTML='';
+  snap.forEach(d=>{
+    const p={id:d.id,...d.data()};
+    if((p.piezas||0)===0) return;
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${p.fecha||'—'}</td><td>${p.sucursal||'—'}</td><td>${p.platilloNombre||'—'}</td><td style="font-weight:500;">${p.piezas||0}</td><td style="font-size:11px;color:var(--text2);">${(p.descontados||[]).join(', ')||'—'}</td>`;
+    tb.appendChild(tr);
+  });
+  document.getElementById('load-vv-prod').style.display='none';
+  document.getElementById('tbl-vv-prod').style.display='table';
+}
+
+window.calcRecetas = function(id, rend) {
+  const pzs = parseFloat(document.getElementById('prod-'+id).value)||0;
+  const recetas = rend>0 ? Math.round((pzs/rend)*1000)/1000 : 0;
+  const el = document.getElementById('prod-recetas-'+id);
+  if(el) el.textContent = recetas+' receta'+(recetas===1?'':'s');
+};
+
+window.saveProduccion = async function() {
+  const fecha = document.getElementById('prod-fecha').value;
+  const suc = document.getElementById('prod-suc').value;
+  if(!fecha){toast('Selecciona la fecha');return;}
+  const platillos = (RECETAS['vv']||[]).filter(r=>r.tipo==='Platillo final');
+  let guardados=0;
+  for(const p of platillos){
+    const input=document.getElementById('prod-'+p.id);
+    const piezas=parseFloat(input?.value||0);
+    if(piezas<=0) continue;
+    const rend=p.rendimientoVal||1;
+    const recetasElaboradas=Math.ceil(piezas/rend);
+    const descontados=[];
+    for(const ing of (p.ingredientes||[])){
+      // Discount based on recetas elaboradas (not piezas directly)
+      const uso=Math.round(ing.cantidad*recetasElaboradas*1000)/1000;
+      descontados.push(`${ing.insumo} ${uso}${ing.unidad}`);
+      const ins=(INSUMOS['vv']||[]).find(i=>i.nombre===ing.insumo);
+      if(ins){
+        const newStock=Math.round(((ins.stock||0)-uso)*1000)/1000;
+        await updateDoc(doc(db,'insumos_vv',ins.id),{stock:Math.max(0,newStock)});
+        ins.stock=Math.max(0,newStock);
+      }
+    }
+    await addDoc(collection(db,'produccion_vv'),{
+      fecha,sucursal:suc,
+      platilloId:p.id,platilloNombre:p.nombre,
+      piezas,recetasElaboradas,
+      descontados,creadoEn:serverTimestamp()
+    });
+    guardados++;
+  }
+  if(!guardados){toast('Ingresa piezas mayores a 0');return;}
+  toast(`${guardados} producto${guardados>1?'s':''} registrados — ${suc}`);
+  platillos.forEach(p=>{
+    const el=document.getElementById('prod-'+p.id); if(el)el.value=0;
+    const rl=document.getElementById('prod-recetas-'+p.id); if(rl)rl.textContent='0 recetas'; const qi=document.getElementById('prod-'+p.id); if(qi)qi.value=0;
+  });
+  loadProduccion('vv');
+};
+
+// ── SUBPRODUCCIÓN VOLO VOLO ───────────────────────────────────
+async function loadSubprod(brand) {
+  if(brand!=='vv') return;
+  if(!RECETAS[brand]) await loadRecetas(brand);
+  if(!INSUMOS[brand]) await loadInsumos(brand);
+  const subrecetas = (RECETAS['vv']||[]).filter(r=>r.tipo==='Subreceta');
+  const subOpts = subrecetas.map(r=>`<option value="${r.id}">${r.nombre}</option>`).join('');
+
+  buildPage('vv-subprod', `
+    <div class="toolbar">
+      <input type="text" placeholder="Buscar..." oninput="filterTbl('tb-sp',this.value)">
+      <button class="btn ml" onclick="toggleForm('form-sp')">+ Registrar lote</button>
+    </div>
+    <div class="form-box" id="form-sp" style="display:none;">
+      <div class="form-title">Lote de subproducción — Volo Volo</div>
+      <div class="fgrid" style="grid-template-columns:repeat(3,1fr);">
+        <div class="fg"><label>Fecha y hora</label><input type="datetime-local" id="sp-fecha"></div>
+        <div class="fg"><label>Subreceta</label><select id="sp-rec" onchange="previewSP()">${subOpts||'<option>Sin subrecetas</option>'}</select></div>
+        <div class="fg"><label>Responsable</label><input type="text" id="sp-resp" placeholder="Chef o encargado"></div>
+        <div class="fg"><label>Recetas elaboradas</label><input type="number" id="sp-cant" value="1" min="0" step="1" oninput="previewSP()"></div>
+        <div class="fg"><label>Unidad subreceta</label><input type="text" id="sp-uni" placeholder="lt, kg, pzs..."></div>
+      </div>
+      <div id="sp-preview" style="display:none;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px;margin-bottom:10px;">
+        <div style="font-size:11px;font-weight:600;color:var(--text);margin-bottom:6px;">Insumos a descontar:</div>
+        <div id="sp-preview-list"></div>
+        <div id="sp-rend-wrap" style="border-top:1px solid var(--border);margin-top:8px;padding-top:8px;display:none;">
+          <div style="font-size:11px;font-weight:500;color:var(--text);margin-bottom:6px;">Rendimiento real obtenido:</div>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <input type="number" id="sp-rend-val" min="0" step="0.01" placeholder="0.00" style="width:100px;font-size:13px;font-weight:500;padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);color:var(--text);">
+            <span id="sp-rend-uni-lbl" style="font-size:12px;color:var(--text2);"></span>
+            <span style="font-size:11px;color:var(--text3);">→ se suma al inventario</span>
+          </div>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-primary" onclick="saveSP()">Guardar y descontar insumos</button>
+        <button class="btn" onclick="hideForm('form-sp')">Cancelar</button>
+      </div>
+      <div class="note">Rendimiento fijo: se calcula solo. Variable: ingrésalo manualmente.</div>
+    </div>
+    <div class="kpis" style="grid-template-columns:repeat(3,1fr);margin-bottom:14px;">
+      <div class="kpi"><div class="kpi-l">Lotes registrados</div><div class="kpi-v" id="sp-lotes">—</div></div>
+      <div class="kpi"><div class="kpi-l">Costo total</div><div class="kpi-v" id="sp-costo">—</div></div>
+      <div class="kpi"><div class="kpi-l">Subrecetas activas</div><div class="kpi-v" id="sp-tipos">—</div></div>
+    </div>
+    <div class="card">
+      <div class="loading" id="load-sp"><div class="spin"></div> Cargando...</div>
+      <table class="tbl" id="tbl-sp" style="display:none;">
+        <thead><tr><th>Fecha</th><th>Subreceta</th><th>Recetas</th><th>Rend. teórico</th><th>Rend. real</th><th>Diferencia</th><th>Costo lote</th><th>Responsable</th></tr></thead>
+        <tbody id="tb-sp"></tbody>
+      </table>
+    </div>`);
+
+  const snap = await getDocs(query(collection(db,'subproduccion_vv'), orderBy('creadoEn','desc')));
+  const tb=document.getElementById('tb-sp');
+  tb.innerHTML=''; let lotes=0,costo=0; const tipos=new Set();
+  snap.forEach(d=>{
+    const s={id:d.id,...d.data()};
+    lotes++; costo+=s.costoLote||0; tipos.add(s.subrecetaNombre||'');
+    const dif=s.diferencia||0;
+    const dc=dif>0?'color:var(--ok)':dif<0?'color:var(--bad)':'';
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${fmtDate(s.fechaHora||s.creadoEn)}</td><td>${s.subrecetaNombre||'—'}</td><td>${s.recetas||0}</td><td>${s.rendTeor||'—'} ${s.rendUni||''}</td><td style="font-weight:500;">${s.rendReal||'—'} ${s.rendUni||''}</td><td style="${dc}">${dif>0?'+':''}${dif||'—'}</td><td>${fmt$(s.costoLote||0)}</td><td>${s.responsable||'—'}</td>`;
+    tb.appendChild(tr);
+  });
+  document.getElementById('sp-lotes').textContent=lotes;
+  document.getElementById('sp-costo').textContent=fmt$(costo);
+  document.getElementById('sp-tipos').textContent=tipos.size;
+  document.getElementById('load-sp').style.display='none';
+  document.getElementById('tbl-sp').style.display='table';
+}
+
+window.previewSP = function() {
+  const recId = document.getElementById('sp-rec').value;
+  const cant = parseFloat(document.getElementById('sp-cant').value)||1;
+  const rec = (RECETAS['vv']||[]).find(r=>r.id===recId);
+  const prev = document.getElementById('sp-preview');
+  if(!rec){prev.style.display='none';return;}
+  prev.style.display='block';
+  const rendTeor = Math.round((rec.rendimientoVal||1)*cant*1000)/1000;
+  document.getElementById('sp-preview-list').innerHTML=(rec.ingredientes||[]).map(ing=>{
+    const uso=Math.round(ing.cantidad*cant*1000)/1000;
+    const ins=(INSUMOS['vv']||[]).find(i=>i.nombre===ing.insumo);
+    const warn=ins&&ins.stock<uso?` <span style="color:var(--bad);font-size:10px;">(stock: ${(ins.stock||0).toFixed(2)})</span>`:'';
+    return `<div style="display:flex;justify-content:space-between;padding:2px 0;font-size:11px;"><span>${ing.insumo}${warn}</span><span style="font-weight:500;">${uso} ${ing.unidad}</span></div>`;
+  }).join('')
+  +`<div style="display:flex;justify-content:space-between;padding:4px 0 0;border-top:1px solid var(--border);margin-top:4px;font-size:11px;color:var(--text2);"><span>Rend. teórico</span><span>${rendTeor} ${rec.rendimientoUni||''}</span></div>`;
+  // show/hide rendimiento real
+  const rendWrap=document.getElementById('sp-rend-wrap');
+  const uniLbl=document.getElementById('sp-rend-uni-lbl');
+  if(rendWrap){rendWrap.style.display=rec.rendimientoTipo==='variable'?'block':'none';}
+  if(uniLbl)uniLbl.textContent=rec.rendimientoUni||'';
+  if(rec.rendimientoTipo==='fijo'){document.getElementById('sp-rend-val').value=rendTeor;}
+  // auto-fill unit
+  const spUni=document.getElementById('sp-uni');
+  if(spUni&&!spUni.value)spUni.value=rec.rendimientoUni||'';
+};
+
+window.saveSP = async function() {
+  const recId=document.getElementById('sp-rec').value;
+  const cant=parseFloat(document.getElementById('sp-cant').value)||0;
+  const rendReal=parseFloat(document.getElementById('sp-rend-val').value)||0;
+  if(!recId||cant<=0){toast('Selecciona subreceta e ingresa recetas elaboradas');return;}
+  const rec=(RECETAS['vv']||[]).find(r=>r.id===recId);
+  if(rec?.rendimientoTipo==='variable'&&rendReal<=0){toast('Ingresa el rendimiento real');return;}
+  const descontados=[]; let costoLote=0;
+  for(const ing of (rec?.ingredientes||[])){
+    const uso=Math.round(ing.cantidad*cant*1000)/1000;
+    descontados.push(`${ing.insumo} ${uso}${ing.unidad}`);
+    const ins=(INSUMOS['vv']||[]).find(i=>i.nombre===ing.insumo);
+    if(ins){
+      const newStock=Math.round(((ins.stock||0)-uso)*1000)/1000;
+      await updateDoc(doc(db,'insumos_vv',ins.id),{stock:Math.max(0,newStock)});
+      ins.stock=Math.max(0,newStock);
+      costoLote+=uso*(ins.precio||0);
+    }
+  }
+  const rendTeor=Math.round((rec?.rendimientoVal||1)*cant*1000)/1000;
+  const rendFinal=rec?.rendimientoTipo==='fijo'?rendTeor:rendReal;
+  await addDoc(collection(db,'subproduccion_vv'),{
+    fechaHora:document.getElementById('sp-fecha').value,
+    subrecetaId:recId,subrecetaNombre:rec?.nombre||'',
+    recetas:cant,rendTeor,rendReal:rendFinal,rendUni:rec?.rendimientoUni||'',
+    diferencia:Math.round((rendFinal-rendTeor)*1000)/1000,
+    unidad:document.getElementById('sp-uni').value,
+    responsable:document.getElementById('sp-resp').value,
+    descontados,costoLote:Math.round(costoLote*100)/100,
+    creadoEn:serverTimestamp()
+  });
+  toast(`Listo. Insumos descontados. ${rendFinal} ${rec?.rendimientoUni||''} sumados.`);
+  hideForm('form-sp');
+  document.getElementById('sp-preview').style.display='none';
+  document.getElementById('sp-rend-val').value='';
+  document.getElementById('sp-cant').value='1';
+  loadSubprod('vv');
+};
+
+// ── DASHBOARDS ────────────────────────────────────────────────
+async function loadDash(brand) {
+  if(brand==='corp'){loadCorpDash();return;}
+  const b=BRANDS[brand];
+  const [vtSnap,gSnap,nSnap]=await Promise.all([
+    getDocs(query(collection(db,'ventas_'+brand),orderBy('creadoEn','desc'))),
+    getDocs(query(collection(db,'gastos_'+brand),orderBy('creadoEn','desc'))),
+    getDocs(query(collection(db,'nomina_'+brand),orderBy('creadoEn','desc')))
+  ]);
+  let ventas=0,gastos=0,nomina=0;
+  const mes=thisMonth();
+  vtSnap.forEach(d=>{const v=d.data();if((v.fecha||'').startsWith(mes))ventas+=v.total||0;});
+  gSnap.forEach(d=>{const g=d.data();if((g.fecha||'').startsWith(mes))gastos+=g.monto||0;});
+  nSnap.forEach(d=>{const n=d.data();if((n.periodo||'')==mes)nomina+=n.monto||0;});
+
+  if(!INSUMOS[brand]) await loadInsumos(brand);
+  const alertas=(INSUMOS[brand]||[]).filter(i=>(i.stock||0)<(i.stockMin||1)).length;
+
+  buildPage(brand+'-dash',`
+    <div class="kpis" style="grid-template-columns:repeat(4,1fr);">
+      <div class="kpi" style="border-top:3px solid ${b.color};"><div class="kpi-l">Ventas este mes</div><div class="kpi-v">${fmt$(ventas)}</div></div>
+      <div class="kpi"><div class="kpi-l">Gastos este mes</div><div class="kpi-v">${fmt$(gastos)}</div></div>
+      <div class="kpi"><div class="kpi-l">Nómina este mes</div><div class="kpi-v">${fmt$(nomina)}</div></div>
+      <div class="kpi"><div class="kpi-l dn">Alertas stock</div><div class="kpi-v dn">${alertas}</div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+      <div class="card card-body">
+        <div class="card-title">Resumen financiero del mes</div>
+        ${[['Ingresos',ventas,'var(--ok)'],['Gastos operativos',gastos,'var(--bad)'],['Nómina',nomina,'var(--bad)'],['Resultado estimado',ventas-gastos-nomina,ventas-gastos-nomina>=0?'var(--ok)':'var(--bad)']].map(([l,v,c])=>`
+          <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:12px;">
+            <span style="color:var(--text2);">${l}</span>
+            <span style="font-weight:500;color:${c};">${fmt$(v)}</span>
+          </div>`).join('')}
+      </div>
+      <div class="card card-body">
+        <div class="card-title">Alertas de inventario</div>
+        ${(INSUMOS[brand]||[]).filter(i=>(i.stock||0)<(i.stockMin||1)).slice(0,6).map(i=>`
+          <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px;">
+            <span>${i.nombre}</span>
+            <span><span class="badge b-bad">${(i.stock||0).toFixed(2)} ${i.unidad}</span></span>
+          </div>`).join('')||'<div style="font-size:12px;color:var(--text3);padding:8px 0;">Sin alertas</div>'}
+      </div>
+    </div>`);
+}
+
+async function loadCorpDash() {
+  const mes=thisMonth();
+  const brands=['vv','ph','la'];
+  const [vvV,phV,laV,cgSnap]=await Promise.all([
+    getDocs(collection(db,'ventas_vv')),
+    getDocs(collection(db,'ventas_ph')),
+    getDocs(collection(db,'ventas_la')),
+    getDocs(query(collection(db,'gastos_corp'),orderBy('creadoEn','desc')))
+  ]);
+  const sum=(snap)=>{let t=0;snap.forEach(d=>{const v=d.data();if((v.fecha||'').startsWith(mes))t+=v.total||0;});return t;};
+  const vv=sum(vvV),ph=sum(phV),la=sum(laV);
+  let gastos=0;
+  cgSnap.forEach(d=>{const g=d.data();if((g.fecha||'').startsWith(mes))gastos+=g.monto||0;});
+  const total=vv+ph+la;
+  document.getElementById('c-ingresos').textContent=fmt$(total);
+  document.getElementById('c-gastos').textContent=fmt$(gastos);
+  document.getElementById('c-vv-ventas').textContent=fmt$(vv);
+  document.getElementById('c-ph-ventas').textContent=fmt$(ph);
+  document.getElementById('c-la-ventas').textContent=fmt$(la);
+  document.getElementById('c-nomina').textContent='—';
+  document.getElementById('c-utilidad').textContent=fmt$(total-gastos);
+}
+
+// ── CORP GASTOS / NÓMINA ──────────────────────────────────────
+async function loadCorpGastos() {
+  const snap=await getDocs(query(collection(db,'gastos_corp'),orderBy('creadoEn','desc')));
+  const tb=document.getElementById('tb-corp-gastos');
+  tb.innerHTML='';
+  snap.forEach(d=>{
+    const g={id:d.id,...d.data()};
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${g.fecha||fmtDate(g.creadoEn)}</td><td>${g.categoria||'—'}</td><td>${g.concepto||'—'}</td><td>${fmt$(g.monto||0)}</td><td>${g.pago||'—'}</td>`;
+    tb.appendChild(tr);
+  });
+  document.getElementById('load-corp-gastos').style.display='none';
+  document.getElementById('tbl-corp-gastos').style.display='table';
+}
+window.saveCorpGasto = async function(){
+  const m=parseFloat(document.getElementById('cg-monto').value)||0;
+  const c=document.getElementById('cg-concepto').value.trim();
+  if(!c||m<=0){toast('Ingresa concepto y monto');return;}
+  await addDoc(collection(db,'gastos_corp'),{fecha:document.getElementById('cg-fecha').value,categoria:document.getElementById('cg-cat').value,concepto:c,monto:m,pago:document.getElementById('cg-pago').value,creadoEn:serverTimestamp()});
+  toast('Gasto guardado'); hideForm('form-corp-gasto'); loadCorpGastos();
+};
+
+async function loadCorpNomina() {
+  const snap=await getDocs(query(collection(db,'nomina_corp'),orderBy('creadoEn','desc')));
+  const tb=document.getElementById('tb-corp-nomina');
+  tb.innerHTML='';
+  snap.forEach(d=>{
+    const n={id:d.id,...d.data()};
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${n.periodo||'—'}</td><td>${n.empleado||'—'}</td><td>${fmt$(n.monto||0)}</td><td>${n.notas||'—'}</td>`;
+    tb.appendChild(tr);
+  });
+  document.getElementById('load-corp-nomina').style.display='none';
+  document.getElementById('tbl-corp-nomina').style.display='table';
+}
+window.saveCorpNomina = async function(){
+  const m=parseFloat(document.getElementById('cn-monto').value)||0;
+  const e=document.getElementById('cn-emp').value.trim();
+  if(!e||m<=0){toast('Ingresa empleado y monto');return;}
+  await addDoc(collection(db,'nomina_corp'),{periodo:document.getElementById('cn-mes').value,empleado:e,monto:m,notas:document.getElementById('cn-notas').value,creadoEn:serverTimestamp()});
+  toast('Nómina guardada'); hideForm('form-corp-nom'); loadCorpNomina();
+};
+
+
+// ── INVENTARIO INICIAL ────────────────────────────────────────
+const VV_LOCATIONS = ['Producción','Torres','Centro','San Francisco'];
+
+async function loadInvInicial(brand) {
+  if(!INSUMOS[brand]) await loadInsumos(brand);
+  const isMes = document.getElementById('ini-mes-'+brand);
+  const mesVal = isMes?.value || new Date().toISOString().slice(0,7);
+
+  const locations = brand==='vv' ? VV_LOCATIONS : ['General'];
+
+  const tabs = locations.map((loc,i) =>
+    `<div class="tab${i===0?' active':''}" onclick="switchIniTab('${brand}','${loc}',this)">${loc}</div>`
+  ).join('');
+
+  buildPage(brand+'-inv-inicial', `
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:10px 14px;font-size:11px;color:var(--text2);margin-bottom:14px;">
+      Captura las existencias reales al inicio del mes. Al guardar, el stock de cada insumo se actualiza con los valores ingresados. Deja en cero los que no tengas.
+    </div>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px;">
+      <div style="font-size:12px;color:var(--text2);">Mes:</div>
+      <input type="month" id="ini-mes-${brand}" value="${mesVal}" style="font-size:12px;padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);color:var(--text);">
+      <button class="btn btn-primary" onclick="saveInvInicial('${brand}')">Guardar inventario inicial</button>
+      <div style="font-size:11px;color:var(--text3);margin-left:4px;" id="ini-saved-${brand}"></div>
+    </div>
+    ${brand==='vv' ? `<div class="tabs" id="ini-tabs-${brand}">${tabs}</div>` : ''}
+    <div id="ini-loc-label-${brand}" style="font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;">${locations[0]}</div>
+    <div class="ini-grid" id="ini-grid-${brand}"></div>
+    <div style="font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin:20px 0 10px;">Historial de inventarios iniciales</div>
+    <div class="card">
+      <div class="loading" id="load-ini-hist-${brand}"><div class="spin"></div> Cargando...</div>
+      <table class="tbl" id="tbl-ini-hist-${brand}" style="display:none;">
+        <thead><tr><th>Mes</th><th>${brand==='vv'?'Ubicación':'—'}</th><th>Insumos capturados</th><th>Registrado</th></tr></thead>
+        <tbody id="tb-ini-hist-${brand}"></tbody>
+      </table>
+    </div>`);
+
+  window['_iniLoc_'+brand] = locations[0];
+  renderIniGrid(brand, locations[0]);
+  loadIniHist(brand);
+}
+
+function renderIniGrid(brand, loc) {
+  const grid = document.getElementById('ini-grid-'+brand);
+  if(!grid) return;
+  const lbl = document.getElementById('ini-loc-label-'+brand);
+  if(lbl) lbl.textContent = loc;
+  grid.innerHTML = '';
+  const insumos = [...(INSUMOS[brand]||[])].sort((a,b)=>(a.nombre||'').localeCompare(b.nombre||'','es'));
+  if(!insumos.length){
+    grid.innerHTML='<div style="font-size:12px;color:var(--text3);padding:20px;">Primero da de alta insumos en el catálogo.</div>';
+    return;
+  }
+  insumos.forEach(i => {
+    const card = document.createElement('div');
+    card.className = 'ini-card';
+    card.innerHTML = `
+      <div class="ini-card-name">${i.nombre}</div>
+      <div class="ini-card-meta">${i.categoria||'—'} · actual: ${(i.stock||0).toFixed(2)} ${i.unidad||''}</div>
+      <input class="ini-input" type="number" id="ini-val-${brand}-${i.id}" value="${(i.stock||0).toFixed(2)}" min="0" step="0.01" onfocus="this.select()">
+      <div style="text-align:center;font-size:10px;color:var(--text3);margin-top:4px;">${i.unidad||''}</div>`;
+    grid.appendChild(card);
+  });
+}
+
+window.switchIniTab = function(brand, loc, el) {
+  document.querySelectorAll('#ini-tabs-'+brand+' .tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  window['_iniLoc_'+brand] = loc;
+  renderIniGrid(brand, loc);
+};
+
+window.saveInvInicial = async function(brand) {
+  const mes = document.getElementById('ini-mes-'+brand).value || new Date().toISOString().slice(0,7);
+  const loc = window['_iniLoc_'+brand] || 'General';
+  const insumos = INSUMOS[brand]||[];
+  if(!insumos.length){toast('No hay insumos en el catálogo');return;}
+
+  const items = [];
+  let updated = 0;
+
+  for(const i of insumos){
+    const input = document.getElementById('ini-val-'+brand+'-'+i.id);
+    if(!input) continue;
+    const newStock = parseFloat(input.value)||0;
+    items.push({insumoId:i.id, nombre:i.nombre, unidad:i.unidad||'', stock:newStock});
+    // Only update master stock if location is Producción (vv) or General (others)
+    if(loc==='Producción'||loc==='General'){
+      if(newStock !== (i.stock||0)){
+        await updateDoc(doc(db,'insumos_'+brand,i.id),{stock:newStock});
+        i.stock = newStock;
+      }
+    }
+    updated++;
+  }
+
+  // Save snapshot record
+  await addDoc(collection(db,'inv_inicial_'+brand),{
+    mes, ubicacion:loc, items,
+    totalInsumos:updated,
+    creadoEn:serverTimestamp()
+  });
+
+  const savedLbl = document.getElementById('ini-saved-'+brand);
+  if(savedLbl) savedLbl.textContent = `✓ Guardado — ${updated} insumos · ${loc} · ${mes}`;
+  toast(`Inventario inicial guardado — ${updated} insumos`);
+  loadIniHist(brand);
+};
+
+async function loadIniHist(brand) {
+  const snap = await getDocs(query(collection(db,'inv_inicial_'+brand), orderBy('creadoEn','desc')));
+  const tb = document.getElementById('tb-ini-hist-'+brand);
+  if(!tb) return;
+  tb.innerHTML = '';
+  snap.forEach(d => {
+    const h = {id:d.id,...d.data()};
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${h.mes||'—'}</td><td>${h.ubicacion||'—'}</td><td>${h.totalInsumos||0} insumos</td><td>${fmtDate(h.creadoEn)}</td>`;
+    tb.appendChild(tr);
+  });
+  const loadEl = document.getElementById('load-ini-hist-'+brand);
+  const tblEl = document.getElementById('tbl-ini-hist-'+brand);
+  if(loadEl) loadEl.style.display='none';
+  if(tblEl) tblEl.style.display='table';
+}
+
+
+// ══ PRECIOS Y TARIFAS ══════════════════════════════════════════
+// Structure:
+// Mostrador: volos sueltos, combos (fixed prices, no flavor tracking)
+// Minis: docena, charola, paquetes (linked to orders/pedidos)
+// VoloKids: cajita, paquete 15 (linked to orders/pedidos)
+// Delivery: piezas tracked daily, money registered end of month
+// Mayoreo: fixed price per client
+
+const TARIFAS_DEFAULT = [
+  // ── MOSTRADOR ──
+  {id:'volo-mostrador',   categoria:'Mostrador',  nombre:'Volo normal',           unidad:'pieza',        piezas:1,  precio:18,  nota:'Cualquier sabor, precio fijo'},
+  {id:'combo-50',         categoria:'Mostrador',  nombre:'Combo $50',             unidad:'combo',        piezas:2,  precio:50,  nota:'2 volos + refresco o agua 500ml'},
+  {id:'combo-55',         categoria:'Mostrador',  nombre:'Combo $55',             unidad:'combo',        piezas:2,  precio:55,  nota:'2 volos + agua 1lt (jamaica u horchata)'},
+  // ── MINIS ──
+  {id:'mini-docena',      categoria:'Minis',      nombre:'Minis docena',          unidad:'docena (12)',  piezas:12, precio:130, nota:'1-2 sabores, pedido previo'},
+  {id:'mini-charola',     categoria:'Minis',      nombre:'Minis charola',         unidad:'charola (56)', piezas:56, precio:499, nota:'1-2 sabores, pedido previo'},
+  {id:'mini-paq3',        categoria:'Minis',      nombre:'Paquete 3 charolas',    unidad:'paquete',      piezas:168,precio:1399,nota:'3 charolas de 56'},
+  {id:'mini-paq4',        categoria:'Minis',      nombre:'Paquete 4 charolas',    unidad:'paquete',      piezas:224,precio:1799,nota:'4 charolas de 56'},
+  // ── VOLOKIDS ──
+  {id:'volokids-1',       categoria:'VoloKids',   nombre:'Cajita VoloKids',       unidad:'cajita',       piezas:1,  precio:80,  nota:'1 volo salado + 1 mini dulce + sabritas + jugo'},
+  {id:'volokids-15',      categoria:'VoloKids',   nombre:'Paquete 15 VoloKids',   unidad:'paquete',      piezas:15, precio:999, nota:'15 cajitas VoloKids'},
+  // ── DELIVERY ──
+  {id:'delivery-volo',    categoria:'Delivery',   nombre:'Volo delivery',         unidad:'pieza',        piezas:1,  precio:0,   nota:'Precio variable, piezas se descuentan diario'},
+  {id:'delivery-bebida',  categoria:'Delivery',   nombre:'Bebida delivery',       unidad:'pieza',        piezas:1,  precio:0,   nota:'Precio variable'},
+];
+
+async function loadProductos() {
+  // Load custom tarifas from Firebase (mayoreo prices + any custom overrides)
+  const snap = await getDocs(query(collection(db,'tarifas_vv'), orderBy('nombre')));
+  const custom = [];
+  snap.forEach(d => custom.push({id:d.id,...d.data(),custom:true}));
+  renderProductos(custom);
+}
+
+function renderProductos(customTarifas=[]) {
+  const allTarifas = [...TARIFAS_DEFAULT, ...customTarifas];
+  const cats = ['Mostrador','Minis','VoloKids','Delivery','Mayoreo'];
+
+  buildPage('vv-productos', `
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:10px 14px;font-size:11px;color:var(--text2);margin-bottom:14px;">
+      Aquí están definidos tus precios y tarifas. Los precios de Mayoreo son por cliente (los defines en la sección Clientes). Puedes agregar tarifas especiales o modificar precios existentes.
+    </div>
+    <div class="toolbar">
+      <select onchange="filterTarifas(this.value)"><option value="">Todas las categorías</option>${cats.map(c=>`<option>${c}</option>`).join('')}</select>
+      <button class="btn ml" onclick="toggleForm('form-tarifa')">+ Tarifa especial / mayoreo</button>
+    </div>
+    <div class="form-box" id="form-tarifa" style="display:none;">
+      <div class="form-title">Nueva tarifa</div>
+      <div class="fgrid" style="grid-template-columns:repeat(3,1fr);">
+        <div class="fg"><label>Nombre</label><input type="text" id="tar-nom" placeholder="Ej: Volo precio mayoreo especial"></div>
+        <div class="fg"><label>Categoría</label><select id="tar-cat">${cats.map(c=>`<option>${c}</option>`).join('')}</select></div>
+        <div class="fg"><label>Unidad de venta</label><input type="text" id="tar-uni" placeholder="pieza, docena, charola..."></div>
+        <div class="fg"><label>Piezas que incluye</label><input type="number" id="tar-pzas" value="1" min="1"></div>
+        <div class="fg"><label>Precio ($)</label><input type="number" id="tar-precio" min="0" step="0.01" placeholder="0.00"></div>
+        <div class="fg"><label>Notas</label><input type="text" id="tar-nota" placeholder="Descripción o condiciones"></div>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-primary" onclick="saveTarifa()">Guardar tarifa</button>
+        <button class="btn" onclick="hideForm('form-tarifa')">Cancelar</button>
+      </div>
+    </div>
+    <div id="tarifas-container"></div>`);
+
+  window._allTarifas = allTarifas;
+  renderTarifasTable(allTarifas);
+}
+
+window.filterTarifas = function(cat) {
+  const filtered = cat ? window._allTarifas.filter(t=>t.categoria===cat) : window._allTarifas;
+  renderTarifasTable(filtered);
+};
+
+function renderTarifasTable(tarifas) {
+  const container = document.getElementById('tarifas-container');
+  if(!container) return;
+  // Group by category
+  const cats = {};
+  tarifas.forEach(t=>{ if(!cats[t.categoria])cats[t.categoria]=[]; cats[t.categoria].push(t); });
+  container.innerHTML = Object.entries(cats).map(([cat,items])=>`
+    <div style="margin-bottom:16px;">
+      <div style="font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">${cat}</div>
+      <div class="card">
+        <table class="tbl">
+          <thead><tr><th>Producto</th><th>Unidad</th><th>Piezas</th><th>Precio</th><th>Nota</th>${items.some(i=>i.custom)?'<th></th>':''}</tr></thead>
+          <tbody>${items.map(t=>`
+            <tr>
+              <td>${t.nombre}</td>
+              <td>${t.unidad||'—'}</td>
+              <td>${t.piezas||1}</td>
+              <td style="font-weight:500;">${t.precio>0?fmt$(t.precio):'Variable'}</td>
+              <td style="font-size:11px;color:var(--text2);">${t.nota||'—'}</td>
+              ${t.custom?`<td><button onclick="deleteTarifa('${t.id}')" style="font-size:10px;padding:2px 7px;border:1px solid var(--border2);border-radius:var(--radius);background:var(--surface);color:var(--bad);cursor:pointer;">Eliminar</button></td>`:''}
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>`).join('');
+}
+
+window.saveTarifa = async function() {
+  const nom = document.getElementById('tar-nom').value.trim();
+  if(!nom){toast('Escribe el nombre');return;}
+  await addDoc(collection(db,'tarifas_vv'),{
+    nombre:nom,
+    categoria:document.getElementById('tar-cat').value,
+    unidad:document.getElementById('tar-uni').value,
+    piezas:parseInt(document.getElementById('tar-pzas').value)||1,
+    precio:parseFloat(document.getElementById('tar-precio').value)||0,
+    nota:document.getElementById('tar-nota').value.trim(),
+    creadoEn:serverTimestamp()
+  });
+  toast('Tarifa guardada'); hideForm('form-tarifa'); loadProductos();
+};
+
+window.deleteTarifa = async function(id) {
+  if(!confirm('¿Eliminar esta tarifa?')) return;
+  await deleteDoc(doc(db,'tarifas_vv',id));
+  toast('Tarifa eliminada'); loadProductos();
+};
+
+// ══ CLIENTES ═══════════════════════════════════════════════════
+const CLIENTES = {vv:[]};
+
+async function loadClientes() {
+  const snap = await getDocs(query(collection(db,'clientes_vv'), orderBy('nombre')));
+  CLIENTES.vv = [];
+  snap.forEach(d => CLIENTES.vv.push({id:d.id,...d.data()}));
+  renderClientes();
+}
+
+function renderClientes() {
+  buildPage('vv-clientes', `
+    <div class="toolbar">
+      <input type="text" placeholder="Buscar cliente..." oninput="filterTbl('tb-cli',this.value)">
+      <button class="btn ml" onclick="toggleForm('form-cli')">+ Nuevo cliente</button>
+    </div>
+    <div class="form-box" id="form-cli" style="display:none;">
+      <div class="form-title">Nuevo cliente</div>
+      <div class="fgrid" style="grid-template-columns:repeat(3,1fr);">
+        <div class="fg"><label>Nombre</label><input type="text" id="cli-nom" placeholder="Nombre completo"></div>
+        <div class="fg"><label>Teléfono / WhatsApp</label><input type="text" id="cli-tel" placeholder="10 dígitos"></div>
+        <div class="fg"><label>Canal habitual</label><select id="cli-canal"><option>WhatsApp</option><option>Instagram</option><option>Llamada</option><option>Mostrador</option><option>Otro</option></select></div>
+        <div class="fg"><label>Tipo de cliente</label><select id="cli-tipo"><option>Pedidos externos (eventos)</option><option>Mayoreo (precio fijo)</option></select></div>
+        <div class="fg"><label>Empresa / organización</label><input type="text" id="cli-empresa" placeholder="Opcional"></div>
+        <div class="fg"><label>Precio mayoreo por volo ($)</label><input type="number" id="cli-precio-mayoreo" min="0" step="0.01" placeholder="Solo si es mayoreo"></div>
+        <div class="fg"><label>Notas</label><input type="text" id="cli-notas" placeholder="Referencias, dirección habitual..."></div>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-primary" onclick="saveCliente()">Guardar cliente</button>
+        <button class="btn" onclick="hideForm('form-cli')">Cancelar</button>
+      </div>
+    </div>
+    <div class="kpis" style="grid-template-columns:repeat(3,1fr);margin-bottom:14px;">
+      <div class="kpi"><div class="kpi-l">Clientes registrados</div><div class="kpi-v">${CLIENTES.vv.length}</div></div>
+      <div class="kpi"><div class="kpi-l">Con pedidos activos</div><div class="kpi-v" id="cli-activos">—</div></div>
+      <div class="kpi"><div class="kpi-l">Canal más frecuente</div><div class="kpi-v" id="cli-canal-top">—</div></div>
+    </div>
+    <div class="card">
+      <table class="tbl" id="tb-cli">
+        <thead><tr><th>Nombre</th><th>Tipo</th><th>Teléfono</th><th>Canal</th><th>Precio mayoreo</th><th>Empresa</th><th>Notas</th></tr></thead>
+        <tbody id="tb-cli-body"></tbody>
+      </table>
+    </div>`);
+  renderClientesTable();
+}
+
+function renderClientesTable() {
+  const tb = document.getElementById('tb-cli-body');
+  if(!tb) return;
+  tb.innerHTML = '';
+  // canal top
+  const canales = {};
+  CLIENTES.vv.forEach(c=>{canales[c.canal]=(canales[c.canal]||0)+1;});
+  const topCanal = Object.entries(canales).sort((a,b)=>b[1]-a[1])[0];
+  const topEl = document.getElementById('cli-canal-top');
+  if(topEl&&topCanal) topEl.textContent=topCanal[0];
+  CLIENTES.vv.forEach(c => {
+    const tr = document.createElement('tr');
+    const tipoBadge = c.tipo&&c.tipo.includes('Mayoreo') ? '<span class="badge b-warn">Mayoreo</span>' : '<span class="badge b-info">Eventos</span>';
+    const precioMay = c.precioMayoreo>0 ? fmt$(c.precioMayoreo)+'/volo' : '—';
+    tr.innerHTML = `<td style="cursor:pointer;color:var(--info);" onclick="verCliente('${c.id}')">${c.nombre}</td><td>${tipoBadge}</td><td>${c.telefono||'—'}</td><td>${c.canal||'—'}</td><td>${precioMay}</td><td>${c.empresa||'—'}</td><td style="font-size:11px;">${c.notas||'—'}</td>`;
+    tb.appendChild(tr);
+  });
+}
+
+window.saveCliente = async function() {
+  const nom = document.getElementById('cli-nom').value.trim();
+  if(!nom){toast('Escribe el nombre');return;}
+  const ref = await addDoc(collection(db,'clientes_vv'),{
+    nombre:nom,
+    telefono:document.getElementById('cli-tel').value.trim(),
+    canal:document.getElementById('cli-canal').value,
+    tipo:document.getElementById('cli-tipo').value,
+    empresa:document.getElementById('cli-empresa').value.trim(),
+    precioMayoreo:parseFloat(document.getElementById('cli-precio-mayoreo').value)||0,
+    notas:document.getElementById('cli-notas').value.trim(),
+    creadoEn:serverTimestamp()
+  });
+  CLIENTES.vv.push({id:ref.id,nombre:nom});
+  toast('Cliente guardado'); hideForm('form-cli'); loadClientes();
+};
+
+window.verCliente = async function(id) {
+  const c = CLIENTES.vv.find(x=>x.id===id);
+  if(!c) return;
+  const snap = await getDocs(query(collection(db,'pedidos_vv'),where('clienteId','==',id),orderBy('fechaEntrega','desc')));
+  let hist = '';
+  snap.forEach(d=>{
+    const p=d.data();
+    hist+=`<tr><td>${p.fechaEntrega||'—'}</td><td>${p.descripcion||'—'}</td><td>${fmt$(p.total||0)}</td><td><span class="badge ${p.estado==='Entregado'?'b-ok':p.estado==='Cancelado'?'b-bad':'b-warn'}">${p.estado||'—'}</span></td></tr>`;
+  });
+  toast(`${c.nombre} — ${snap.size} pedidos`);
+};
+
+// ══ PEDIDOS EXTERNOS ═══════════════════════════════════════════
+async function loadPedidos() {
+  if(!PRODUCTOS.vv.length) await loadProductos();
+  if(!CLIENTES.vv.length) await loadClientes();
+  const snap = await getDocs(query(collection(db,'pedidos_vv'), orderBy('fechaEntrega','asc')));
+  const pedidos = [];
+  snap.forEach(d => pedidos.push({id:d.id,...d.data()}));
+  renderPedidos(pedidos);
+}
+
+function renderPedidos(pedidos) {
+  const hoy = today();
+  const pendientes = pedidos.filter(p=>p.estado==='Pendiente');
+  const hoyPedidos = pedidos.filter(p=>p.fechaEntrega===hoy&&p.estado==='Pendiente');
+  const prodOpts = PRODUCTOS.vv.map(p=>`<option value="${p.id}" data-precio="${p.precio}">${p.nombre} — ${p.unidad}</option>`).join('');
+  const cliOpts = CLIENTES.vv.map(c=>`<option value="${c.id}">${c.nombre}${c.telefono?' · '+c.telefono:''}</option>`).join('');
+
+  buildPage('vv-pedidos', `
+    <div class="kpis" style="grid-template-columns:repeat(4,1fr);margin-bottom:14px;">
+      <div class="kpi"><div class="kpi-l">Pendientes totales</div><div class="kpi-v">${pendientes.length}</div></div>
+      <div class="kpi"><div class="kpi-l dn">Entregan hoy</div><div class="kpi-v dn">${hoyPedidos.length}</div></div>
+      <div class="kpi"><div class="kpi-l">Total pendiente ($)</div><div class="kpi-v">${fmt$(pendientes.reduce((s,p)=>s+(p.total||0),0))}</div></div>
+      <div class="kpi"><div class="kpi-l">Entregados</div><div class="kpi-v">${pedidos.filter(p=>p.estado==='Entregado').length}</div></div>
+    </div>
+    <div class="toolbar">
+      <input type="text" placeholder="Buscar cliente o pedido..." oninput="filterTbl('tb-ped',this.value)">
+      <select onchange="filterTbl('tb-ped',null,this,5)"><option value="">Estado</option><option>Pendiente</option><option>Entregado</option><option>Cancelado</option></select>
+      <input type="date" onchange="filterTbl('tb-ped',null,this,0)">
+      <button class="btn ml" onclick="toggleForm('form-ped')">+ Nuevo pedido</button>
+    </div>
+    <div class="form-box" id="form-ped" style="display:none;">
+      <div class="form-title">Registrar pedido externo</div>
+      <div class="fgrid" style="grid-template-columns:repeat(3,1fr);">
+        <div class="fg"><label>Cliente</label>
+          <div class="ac-wrap"><input type="text" id="ped-cli-txt" placeholder="Buscar cliente..." autocomplete="off" oninput="acCliente(this)" onfocus="acCliente(this)"><input type="hidden" id="ped-cli-id"><div class="ac-list"></div></div>
+        </div>
+        <div class="fg"><label>Fecha de entrega</label><input type="date" id="ped-fecha-entrega"></div>
+        <div class="fg"><label>Hora de entrega</label><input type="time" id="ped-hora" value="13:00"></div>
+        <div class="fg"><label>Canal / origen</label><select id="ped-canal"><option>WhatsApp</option><option>Instagram</option><option>Llamada</option><option>Mostrador</option><option>Otro</option></select></div>
+        <div class="fg"><label>Sucursal de entrega</label><select id="ped-suc"><option>Torres</option><option>Centro</option><option>San Francisco</option><option>A domicilio</option></select></div>
+        <div class="fg"><label>Anticipo ($)</label><input type="number" id="ped-anticipo" min="0" step="0.01" placeholder="0.00"></div>
+        <div class="fg"><label>Pago anticipo</label><select id="ped-anticipo-pago"><option value="">Sin anticipo</option><option>Efectivo</option><option>Transferencia</option><option>Tarjeta</option></select></div>
+        <div class="fg"><label>Fecha corte anticipo</label><input type="date" id="ped-anticipo-fecha"></div>
+        <div class="fg"><label>Turno corte anticipo</label><select id="ped-anticipo-turno"><option>Mañana</option><option>Tarde</option><option>Completo</option></select></div>
+      </div>
+      <div style="font-size:11px;font-weight:500;color:var(--text2);margin:8px 0 6px;text-transform:uppercase;letter-spacing:.04em;">Productos del pedido</div>
+      <div id="ped-items-list"></div>
+      <button class="btn-add-row" onclick="addPedItem()">+ Agregar producto</button>
+      <div class="fgrid" style="grid-template-columns:1fr 1fr;margin-top:10px;">
+        <div class="fg"><label>Total del pedido ($)</label><input type="number" id="ped-total" min="0" step="0.01" placeholder="0.00"></div>
+        <div class="fg"><label>Notas / especificaciones</label><input type="text" id="ped-notas" placeholder="Sabores, dedicatoria, instrucciones..."></div>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-primary" onclick="savePedido()">Registrar pedido</button>
+        <button class="btn" onclick="hideForm('form-ped')">Cancelar</button>
+      </div>
+    </div>
+    <div class="card">
+      <table class="tbl" id="tbl-ped">
+        <thead><tr><th>Entrega</th><th>Hora</th><th>Cliente</th><th>Productos</th><th>Total</th><th>Estado</th><th>Anticipo</th><th>Sucursal</th><th></th></tr></thead>
+        <tbody id="tb-ped"></tbody>
+      </table>
+    </div>`);
+
+  addPedItem(); // first row
+  const tb = document.getElementById('tb-ped');
+  tb.innerHTML='';
+  pedidos.forEach(p => {
+    const bc = p.estado==='Entregado'?'b-ok':p.estado==='Cancelado'?'b-bad':'b-warn';
+    const esHoy = p.fechaEntrega===hoy&&p.estado==='Pendiente';
+    const tr = document.createElement('tr');
+    if(esHoy) tr.style.background='var(--warn-bg)';
+    const items = (p.items||[]).map(i=>`${i.cantidad}× ${i.nombre}`).join(', ');
+    tr.innerHTML = `<td style="font-weight:${esHoy?'500':'400'};">${p.fechaEntrega||'—'}</td><td>${p.hora||'—'}</td><td>${p.clienteNombre||'—'}</td><td style="font-size:11px;">${items||p.notas||'—'}</td><td>${fmt$(p.total||0)}</td><td><span class="badge ${bc}">${p.estado||'Pendiente'}</span></td><td>${p.anticipo>0?fmt$(p.anticipo)+" "+("("+p.anticipoPago+")") :"—"}</td><td>${p.sucursal||'—'}</td><td>${p.estado==='Pendiente'?`<button class="btn" onclick="entregarPedido('${p.id}')" style="font-size:10px;padding:3px 8px;">Entregar</button>`:''}</td>`;
+    tb.appendChild(tr);
+  });
+}
+
+window.addPedItem = function() {
+  const list = document.getElementById('ped-items-list');
+  if(!list) return;
+  const prodOpts = PRODUCTOS.vv.map(p=>`<option value="${p.id}" data-precio="${p.precio}" data-nom="${p.nombre}">${p.nombre}</option>`).join('');
+  const row = document.createElement('div');
+  row.className='rec-row';
+  row.style.marginBottom='7px';
+  row.innerHTML=`
+    <select style="flex:2;" onchange="autoPrecioPed(this)">${prodOpts||'<option value="">Sin productos en catálogo</option>'}</select>
+    <input type="number" placeholder="Cant." style="width:70px;" value="1" min="1">
+    <input type="number" placeholder="Precio unit." style="width:100px;" step="0.01" min="0">
+    <button class="btn-rm" onclick="this.parentElement.remove()">✕</button>`;
+  list.appendChild(row);
+};
+
+window.autoPrecioPed = function(sel) {
+  const precio = sel.options[sel.selectedIndex]?.dataset.precio||0;
+  const row = sel.closest('.rec-row');
+  const precioInput = row.querySelectorAll('input')[1];
+  if(precioInput&&precio>0) precioInput.value=precio;
+};
+
+window.acCliente = function(input) {
+  const acDiv = input.parentElement.querySelector('.ac-list');
+  const q = (input.value||'').toLowerCase();
+  const matches = CLIENTES.vv.filter(c=>
+    c.nombre.toLowerCase().includes(q)||(c.telefono||'').includes(q)
+  ).slice(0,10);
+  if(!matches.length){acDiv.style.display='none';return;}
+  acDiv.innerHTML=matches.map(c=>`<div class="ac-item" data-id="${c.id}" data-nom="${c.nombre}">${c.nombre}<small>${c.telefono||''} · ${c.canal||''}</small></div>`).join('');
+  acDiv.style.display='block';
+  acDiv.querySelectorAll('.ac-item').forEach(div=>{
+    div.addEventListener('mousedown',e=>{
+      e.preventDefault();
+      input.value=div.dataset.nom;
+      document.getElementById('ped-cli-id').value=div.dataset.id;
+      acDiv.style.display='none';
+    });
+  });
+};
+
+window.savePedido = async function() {
+  const cliId = document.getElementById('ped-cli-id').value;
+  const cliTxt = document.getElementById('ped-cli-txt').value.trim();
+  const fecha = document.getElementById('ped-fecha-entrega').value;
+  if(!cliTxt||!fecha){toast('Selecciona cliente y fecha de entrega');return;}
+  // collect items
+  const items=[];
+  document.querySelectorAll('#ped-items-list .rec-row').forEach(row=>{
+    const sel=row.querySelector('select');
+    const cant=parseInt(row.querySelectorAll('input')[0].value)||0;
+    const precio=parseFloat(row.querySelectorAll('input')[1].value)||0;
+    if(sel&&sel.value&&cant>0){
+      const nom=sel.options[sel.selectedIndex]?.dataset.nom||sel.options[sel.selectedIndex]?.text||'';
+      items.push({productoId:sel.value,nombre:nom,cantidad:cant,precioUnit:precio,subtotal:cant*precio});
+    }
+  });
+  const total=parseFloat(document.getElementById('ped-total').value)||items.reduce((s,i)=>s+i.subtotal,0);
+  // Auto-create cliente if not found
+  let finalCliId=cliId;
+  let finalCliNom=cliTxt;
+  if(!cliId&&cliTxt){
+    const ref=await addDoc(collection(db,'clientes_vv'),{nombre:cliTxt,canal:document.getElementById('ped-canal').value,creadoEn:serverTimestamp()});
+    finalCliId=ref.id;
+    CLIENTES.vv.push({id:ref.id,nombre:cliTxt});
+  }
+  await addDoc(collection(db,'pedidos_vv'),{
+    clienteId:finalCliId,
+    clienteNombre:finalCliNom,
+    fechaEntrega:fecha,
+    hora:document.getElementById('ped-hora').value,
+    canal:document.getElementById('ped-canal').value,
+    sucursal:document.getElementById('ped-suc').value,
+    anticipo:parseFloat(document.getElementById('ped-anticipo').value)||0,
+    anticipoPago:document.getElementById('ped-anticipo-pago').value,
+    anticipoFecha:document.getElementById('ped-anticipo-fecha').value,
+    anticipoTurno:document.getElementById('ped-anticipo-turno').value,
+    items, total, notas:document.getElementById('ped-notas').value,
+    estado:'Pendiente',
+    creadoEn:serverTimestamp()
+  });
+  // If anticipo was paid, register it in that day's ventas
+  const anticipoMonto = parseFloat(document.getElementById('ped-anticipo').value)||0;
+  const anticipoPago = document.getElementById('ped-anticipo-pago').value;
+  const anticipoFecha = document.getElementById('ped-anticipo-fecha').value;
+  const anticipoTurno = document.getElementById('ped-anticipo-turno').value;
+  if(anticipoMonto>0 && anticipoPago && anticipoFecha){
+    await addDoc(collection(db,'ventas_vv'),{
+      fecha:anticipoFecha,
+      canal:document.getElementById('ped-canal').value,
+      turno:anticipoTurno,
+      total:anticipoMonto,
+      efectivo:anticipoPago==='Efectivo'?anticipoMonto:0,
+      tarjeta:anticipoPago!=='Efectivo'?anticipoMonto:0,
+      piezas:0,
+      responsable:'Anticipo pedido',
+      notas:`Anticipo — ${finalCliNom}`,
+      esAnticipo:true,
+      creadoEn:serverTimestamp()
+    });
+  }
+  toast('Pedido registrado'+(anticipoMonto>0&&anticipoPago?' + anticipo en corte del '+anticipoFecha:''));
+  hideForm('form-ped');
+  loadPedidos();
+};
+
+window.entregarPedido = async function(id) {
+  const pago = prompt('Forma de pago al entregar (Efectivo / Transferencia / Tarjeta):','Efectivo');
+  if(!pago) return;
+  await updateDoc(doc(db,'pedidos_vv',id),{estado:'Entregado',pagadoEn:today(),formaPago:pago});
+  // Get pedido data and register as venta
+  const pedSnap = await getDocs(collection(db,'pedidos_vv'));
+  pedSnap.forEach(async d=>{
+    if(d.id!==id) return;
+    const p=d.data();
+    await addDoc(collection(db,'ventas_vv'),{
+      fecha:today(),
+      canal:p.canal||'Pedidos externos',
+      turno:'Completo',
+      total:p.total||0,
+      efectivo:pago==='Efectivo'?p.total||0:0,
+      tarjeta:pago!=='Efectivo'?p.total||0:0,
+      piezas:(p.items||[]).reduce((s,i)=>s+(i.cantidad||0),0),
+      responsable:'Pedido externo',
+      notas:`Pedido: ${p.clienteNombre} — ${(p.items||[]).map(i=>i.cantidad+'x '+i.nombre).join(', ')}`,
+      pedidoId:id,
+      creadoEn:serverTimestamp()
+    });
+  });
+  toast('Pedido entregado y venta registrada');
+  loadPedidos();
+};
+
+// ── FILTER TABLE ──────────────────────────────────────────────
+window.filterTbl = function(tbId, val, sel, col) {
+  const q=(val!=null?val:'').toLowerCase();
+  const sv=sel?sel.value.toLowerCase():'';
+  document.querySelectorAll('#'+tbId+' tr').forEach(r=>{
+    const txt=r.textContent.toLowerCase();
+    const mQ=!q||txt.includes(q);
+    const mS=!sv||(col!=null&&r.cells[col]?r.cells[col].textContent.toLowerCase().includes(sv):txt.includes(sv));
+    r.style.display=(mQ&&mS)?'':'none';
+  });
+};
+
+// close autocomplete on outside click
+document.addEventListener('click', e => {
+  if(!e.target.closest('.ac-wrap')) {
+    document.querySelectorAll('.ac-list').forEach(el=>el.style.display='none');
+  }
+});
+
+// ── INIT ──────────────────────────────────────────────────────
+(async()=>{
+  // open corp nav by default
+  document.getElementById('nav-corp').style.maxHeight = document.getElementById('nav-corp').scrollHeight+'px';
+  document.getElementById('tog-corp').classList.add('open');
+  // set today on date inputs
+  const t=today(); const m=thisMonth();
+  ['cg-fecha','cn-mes'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=id.includes('mes')?m:t;});
+  await loadCorpDash();
+})();
+</script>
+</body>
+</html>
